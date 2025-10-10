@@ -177,13 +177,21 @@ def generate_maze(seed=None):
         print("Warning: Maze is not symmetric!")
     else:
         print("Symétrie: OK")
-    (nb_cellules_empty, nb_cellules_wall, p) = propConnexite(maze, WIDTH, HEIGHT)
-    print(f"Nombres cellules vides: {nb_cellules_empty}")
-    print(f"Nombres cellules Mur: {nb_cellules_wall}")
-    print(f"Proportion connexité principale: {p}")
     return maze
 
 
 # Generate and display a random maze
 maze = generate_maze()
+(nb_cellules_empty, nb_cellules_wall, p) = propConnexite(maze, WIDTH, HEIGHT)
+print(f"Nombres cellules vides: {nb_cellules_empty}")
+print(f"Nombres cellules Mur: {nb_cellules_wall}")
+print(f"Proportion connexité principale: {p}")
 printMaze(maze)
+
+maze_json = {}
+
+donnes = {
+    "height": HEIGHT,
+    "width": WIDTH,
+    "p_connexite": p
+}
