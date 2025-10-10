@@ -1,0 +1,1 @@
+J'ai cherché des algorithmes de labyrinthe, mais je me suis dit que ça n'allait pas trop, car les algorithmes font des labyrinthes parfaits. J'ai trouvé une solution à base de placement de tuile et d'utilisation de Wave Function Collapse, et j'ai commencé à l'implémenter.
