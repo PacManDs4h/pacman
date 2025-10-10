@@ -1,5 +1,6 @@
 import random
 import time
+from test_recursive_backtracking import *
 
 WIDTH = 39  # Width of the maze (must be odd).
 HEIGHT = 19  # Height of the maze (must be odd).
@@ -23,9 +24,7 @@ def initialize_maze():
 
 
 def printMaze(maze, markX=None, markY=None):
-    """Displays the maze data structure in the maze argument. The
-    markX and markY arguments are coordinates of the current
-    '@' location of the algorithm as it generates the maze."""
+    """Displays the maze data structure."""
     for y in range(HEIGHT):
         for x in range(WIDTH):
             if markX == x and markY == y:
@@ -37,8 +36,7 @@ def printMaze(maze, markX=None, markY=None):
 
 def visit(x, y, maze, hasVisited):
     """'Carve out' empty spaces in the maze at x, y and then
-    recursively move to neighboring unvisited spaces. This
-    function backtracks when the mark has reached a dead end."""
+    recursively move to neighboring unvisited spaces."""
     maze[(x, y)] = EMPTY
 
     while True:
@@ -49,8 +47,7 @@ def visit(x, y, maze, hasVisited):
             unvisitedNeighbors.append(SOUTH)
         if x > 1 and (x - 2, y) not in hasVisited:
             unvisitedNeighbors.append(WEST)
-        # Full width, no symmetry limit
-        if x < WIDTH - 2 and (x + 2, y) not in hasVisited:
+        if x < WIDTH // 2 - 2 and (x + 2, y) not in hasVisited:  # Limit to left half
             unvisitedNeighbors.append(EAST)
 
         if len(unvisitedNeighbors) == 0:
@@ -74,9 +71,15 @@ def visit(x, y, maze, hasVisited):
             visit(nextX, nextY, maze, hasVisited)
 
 
+def mirrorMaze(maze):
+    half = WIDTH // 2
+    for x in range(half):
+        for y in range(HEIGHT):
+            maze[(WIDTH - 1 - x, y)] = maze[(x, y)]
+
+
 def addCycles(maze, numCycles):
-    """Add numCycles loops by randomly removing walls."""
-    walls = [(x, y) for x in range(WIDTH)
+    walls = [(x, y) for x in range(WIDTH // 2)
              for y in range(HEIGHT) if maze[(x, y)] == WALL]
     random.shuffle(walls)
     cyclesAdded = 0
@@ -84,7 +87,7 @@ def addCycles(maze, numCycles):
     for x, y in walls:
         if cyclesAdded >= numCycles:
             break
-        if (x > 0 and x < WIDTH - 1 and maze[(x - 1, y)] == EMPTY and maze[(x + 1, y)] == EMPTY):
+        if (x > 0 and x < WIDTH // 2 - 1 and maze[(x - 1, y)] == EMPTY and maze[(x + 1, y)] == EMPTY):
             maze[(x, y)] = EMPTY
             cyclesAdded += 1
         elif (y > 0 and y < HEIGHT - 1 and maze[(x, y - 1)] == EMPTY and maze[(x, y + 1)] == EMPTY):
@@ -93,12 +96,11 @@ def addCycles(maze, numCycles):
 
 
 def removeDeadEnds(maze):
-    """Remove dead-ends by connecting them to adjacent corridors."""
     maxIterations = 100
     iterations = 0
     while iterations < maxIterations:
         deadEnds = []
-        for x in range(1, WIDTH - 1):
+        for x in range(1, WIDTH // 2):
             for y in range(1, HEIGHT - 1):
                 if maze[(x, y)] == EMPTY:
                     wallsAround = sum(1 for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -114,28 +116,45 @@ def removeDeadEnds(maze):
         random.shuffle(directions)
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            if maze.get((nx, ny), WALL) == WALL and 0 < nx < WIDTH - 1 and 0 < ny < HEIGHT - 1:
+            if maze.get((nx, ny), WALL) == WALL and 0 < nx < WIDTH // 2 and 0 < ny < HEIGHT - 1:
                 if maze.get((nx + dx, ny + dy), WALL) == EMPTY:
                     maze[(nx, ny)] = EMPTY
                     break
         iterations += 1
 
 
-def addTunnels(maze, num_tunnels=3):
-    """Add multiple wrap-around tunnels at different horizontal levels."""
-    possible_y = list(range(1, HEIGHT - 1, 2)
-                      )  # Odd positions to align with maze structure
+def addTunnels(maze, num_wrap_tunnels=3, num_center_tunnels=3):
+    """Add wrap-around tunnels at borders and independent center tunnels."""
+    possible_y = list(range(1, HEIGHT - 1, 2))  # Odd positions for alignment
     random.shuffle(possible_y)
-    selected_y = possible_y[:min(num_tunnels, len(possible_y))]
 
-    for tunnelY in selected_y:
-        maze[(0, tunnelY)] = EMPTY  # Left tunnel entrance
-        maze[(WIDTH - 1, tunnelY)] = EMPTY  # Right tunnel entrance
-        # Ensure connection to the maze if not already empty
-        if maze.get((1, tunnelY), WALL) == WALL:
-            maze[(1, tunnelY)] = EMPTY
-        if maze.get((WIDTH - 2, tunnelY), WALL) == WALL:
-            maze[(WIDTH - 2, tunnelY)] = EMPTY
+    # Select y-positions for wrap-around tunnels
+    wrap_y = possible_y[:min(num_wrap_tunnels, len(possible_y))]
+
+    # Select different y-positions for center tunnels
+    remaining_y = [y for y in possible_y if y not in wrap_y]
+    random.shuffle(remaining_y)
+    center_y = remaining_y[:min(num_center_tunnels, len(remaining_y))]
+
+    # Add wrap-around tunnels at borders (left half and mirrored)
+    for tunnelY in wrap_y:
+        maze[(0, tunnelY)] = EMPTY
+        maze[(1, tunnelY)] = EMPTY
+        # Right side will be handled by mirrorMaze
+
+    # We store center_y to apply in generate_maze after mirrorMaze
+    return center_y
+
+
+def applyCenterTunnels(maze, center_y):
+    """Apply center tunnels symmetrically."""
+    center_x = WIDTH // 2
+    for tunnelY in center_y:
+        maze[(center_x, tunnelY)] = EMPTY
+        if maze.get((center_x - 1, tunnelY), WALL) == WALL:
+            maze[(center_x - 1, tunnelY)] = EMPTY
+        if maze.get((center_x + 1, tunnelY), WALL) == WALL:
+            maze[(center_x + 1, tunnelY)] = EMPTY
 
 
 def generate_maze(seed=None):
@@ -150,7 +169,18 @@ def generate_maze(seed=None):
     visit(1, 1, maze, hasVisited)
     addCycles(maze, 10)
     removeDeadEnds(maze)
-    addTunnels(maze, num_tunnels=3)  # Add 3 tunnels by default
+    center_y = addTunnels(maze, num_wrap_tunnels=2, num_center_tunnels=5)
+    mirrorMaze(maze)  # Apply symmetry after all modifications
+    applyCenterTunnels(maze, center_y)  # Add center tunnels symmetrically
+    # Verify symmetry (optional, for debugging)
+    if not checkSymmetry(maze, WIDTH, HEIGHT):
+        print("Warning: Maze is not symmetric!")
+    else:
+        print("Symétrie: OK")
+    (nb_cellules_empty, nb_cellules_wall, p) = propConnexite(maze, WIDTH, HEIGHT)
+    print(f"Nombres cellules vides: {nb_cellules_empty}")
+    print(f"Nombres cellules Mur: {nb_cellules_wall}")
+    print(f"Proportion connexité principale: {p}")
     return maze
 
 
