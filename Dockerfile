@@ -1,5 +1,10 @@
-FROM python:3.11
+FROM python:3.10-slim
 
-LABEL version="1.0" maintener="adel"
+WORKDIR /app
+COPY . .
 
-RUN 
+RUN pip install flask
+
+EXPOSE 8080
+
+CMD ["python", "server.py"]

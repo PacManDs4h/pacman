@@ -4,8 +4,7 @@ def checkSymmetry(maze, WIDTH, HEIGHT):
     for x in range(half):
         for y in range(HEIGHT):
             if maze[(x, y)] != maze[(WIDTH - 1 - x, y)]:
-                print(f"Asymmetry detected at ({x}, {
-                      y}) and ({WIDTH - 1 - x}, {y})")
+                print(f"Asymmetry detected at ({x}, {y}) and ({WIDTH - 1 - x}, {y})")
                 return False
     return True
 
