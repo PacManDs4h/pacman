@@ -207,4 +207,4 @@ donnees = {
     "maze": maze_json
 }
 
-json = json.dumps(donnees)
+Json = json.dumps(donnees)
