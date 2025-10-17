@@ -28,4 +28,13 @@ def generate():
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
 
+# Dans server.py
+
+@app.route("/", methods=["GET"])
+def index():
+    return "Maze API is running. Use GET /generate", 200
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return "ok", 200
 
