@@ -210,8 +210,3 @@ def getJson():
         "maze": maze_json
     }
     return json.dumps(donnees)
-
-
-# Export to JSON
-print("\nJSON Output:")
-print(getJson())

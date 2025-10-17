@@ -1,5 +1,5 @@
 from create_image import *
-from recursive_backtracking import *
+from maze import *
 
 data = json.loads(getJson())
 createImage(data).show()
