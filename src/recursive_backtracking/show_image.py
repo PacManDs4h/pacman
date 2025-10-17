@@ -10,5 +10,6 @@ NUM_WRAP_TUNNELS = 2
 NUM_CENTER_TUNNELS = 5
 
 maze = Maze(WIDTH, HEIGHT, NB_CYCLES, NUM_WRAP_TUNNELS, NUM_CENTER_TUNNELS)
-data = json.loads(getJson(maze.maze))
+maze.generate_maze()
+data = json.loads(getJson(maze))
 createImage(data).show()

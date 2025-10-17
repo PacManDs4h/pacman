@@ -1,7 +1,7 @@
 import random
 import time
 from test_maze import propConnexite, checkSymmetry
-from json_maze import maze_to_tabjson
+# from json_maze import maze_to_tabjson
 import json
 
 # Use these characters for displaying the maze:
@@ -179,18 +179,18 @@ class Maze:
         return self.maze
 
 
-# Parameters
-WIDTH = 39
-HEIGHT = 19
-NB_CYCLES = 10
-NUM_WRAP_TUNNELS = 2
-NUM_CENTER_TUNNELS = 5
+# # Parameters
+# WIDTH = 39
+# HEIGHT = 19
+# NB_CYCLES = 10
+# NUM_WRAP_TUNNELS = 2
+# NUM_CENTER_TUNNELS = 5
 
-# Generate and display a random maze
-maze_obj = Maze(WIDTH, HEIGHT, NB_CYCLES, NUM_WRAP_TUNNELS, NUM_CENTER_TUNNELS)
-maze = maze_obj.generate_maze()
-(nb_cellules_empty, nb_cellules_wall, p) = propConnexite(maze, WIDTH, HEIGHT)
-print(f"Nombre de cellules vides: {nb_cellules_empty}")
-print(f"Nombre de cellules mur: {nb_cellules_wall}")
-print(f"Proportion de connexité principale: {p:.2f}")
-maze_obj.printMaze()
+# # Generate and display a random maze
+# maze_obj = Maze(WIDTH, HEIGHT, NB_CYCLES, NUM_WRAP_TUNNELS, NUM_CENTER_TUNNELS)
+# maze = maze_obj.generate_maze()
+# (nb_cellules_empty, nb_cellules_wall, p) = propConnexite(maze, WIDTH, HEIGHT)
+# print(f"Nombre de cellules vides: {nb_cellules_empty}")
+# print(f"Nombre de cellules mur: {nb_cellules_wall}")
+# print(f"Proportion de connexité principale: {p:.2f}")
+# maze_obj.printMaze()
