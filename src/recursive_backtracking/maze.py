@@ -193,6 +193,7 @@ print(f"Nombres cellules Mur: {nb_cellules_wall}")
 print(f"Proportion connexité principale: {p}")
 printMaze(maze)
 
+
 def getJson():
     maze_json = maze_to_tabjson(maze, WIDTH, HEIGHT)
 
