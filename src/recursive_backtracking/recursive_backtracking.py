@@ -1,11 +1,16 @@
 import random
 import time
 from test_recursive_backtracking import *
+from json_backtracking import *
+import json
 
 WIDTH = 39  # Width of the maze (must be odd).
 HEIGHT = 19  # Height of the maze (must be odd).
 assert WIDTH % 2 == 1 and WIDTH >= 3
 assert HEIGHT % 2 == 1 and HEIGHT >= 3
+NB_CYCLES = 10
+NUM_WRAP_TUNNELS = 2
+NUM_CENTER_TUNNELS = 5
 
 # Use these characters for displaying the maze:
 EMPTY = ' '
@@ -167,9 +172,9 @@ def generate_maze(seed=None):
     maze = initialize_maze()
     hasVisited = [(1, 1)]
     visit(1, 1, maze, hasVisited)
-    addCycles(maze, 10)
+    addCycles(maze, NB_CYCLES)
     removeDeadEnds(maze)
-    center_y = addTunnels(maze, num_wrap_tunnels=2, num_center_tunnels=5)
+    center_y = addTunnels(maze, NUM_WRAP_TUNNELS, NUM_CENTER_TUNNELS)
     mirrorMaze(maze)  # Apply symmetry after all modifications
     applyCenterTunnels(maze, center_y)  # Add center tunnels symmetrically
     # Verify symmetry (optional, for debugging)
@@ -188,10 +193,18 @@ print(f"Nombres cellules Mur: {nb_cellules_wall}")
 print(f"Proportion connexité principale: {p}")
 printMaze(maze)
 
-maze_json = {}
+maze_json = maze_to_tabjson(maze, WIDTH, HEIGHT)
 
-donnes = {
+donnees = {
     "height": HEIGHT,
     "width": WIDTH,
-    "p_connexite": p
+    "p_connexite": p,
+    "nb_cellules_vides": nb_cellules_empty,
+    "nb_cellules_mur": nb_cellules_wall,
+    "nb_cycles": NB_CYCLES,
+    "num_tunnels_wrap": NUM_WRAP_TUNNELS,
+    "num_tunnels_centre": NUM_CENTER_TUNNELS,
+    "maze": maze_json
 }
+
+json = json.dumps(donnees)
