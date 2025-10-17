@@ -194,19 +194,3 @@ print(f"Nombre de cellules vides: {nb_cellules_empty}")
 print(f"Nombre de cellules mur: {nb_cellules_wall}")
 print(f"Proportion de connexité principale: {p:.2f}")
 maze_obj.printMaze()
-
-
-def getJson():
-    maze_json = maze_to_tabjson(maze, WIDTH, HEIGHT)
-    donnees = {
-        "height": HEIGHT,
-        "width": WIDTH,
-        "p_connexite": p,
-        "nb_cellules_vides": nb_cellules_empty,
-        "nb_cellules_mur": nb_cellules_wall,
-        "nb_cycles": NB_CYCLES,
-        "num_tunnels_wrap": NUM_WRAP_TUNNELS,
-        "num_tunnels_centre": NUM_CENTER_TUNNELS,
-        "maze": maze_json
-    }
-    return json.dumps(donnees)
