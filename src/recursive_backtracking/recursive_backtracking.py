@@ -193,18 +193,20 @@ print(f"Nombres cellules Mur: {nb_cellules_wall}")
 print(f"Proportion connexité principale: {p}")
 printMaze(maze)
 
-maze_json = maze_to_tabjson(maze, WIDTH, HEIGHT)
+def getJson():
+    maze_json = maze_to_tabjson(maze, WIDTH, HEIGHT)
 
-donnees = {
-    "height": HEIGHT,
-    "width": WIDTH,
-    "p_connexite": p,
-    "nb_cellules_vides": nb_cellules_empty,
-    "nb_cellules_mur": nb_cellules_wall,
-    "nb_cycles": NB_CYCLES,
-    "num_tunnels_wrap": NUM_WRAP_TUNNELS,
-    "num_tunnels_centre": NUM_CENTER_TUNNELS,
-    "maze": maze_json
-}
+    donnees = {
+        "height": HEIGHT,
+        "width": WIDTH,
+        "p_connexite": p,
+        "nb_cellules_vides": nb_cellules_empty,
+        "nb_cellules_mur": nb_cellules_wall,
+        "nb_cycles": NB_CYCLES,
+        "num_tunnels_wrap": NUM_WRAP_TUNNELS,
+        "num_tunnels_centre": NUM_CENTER_TUNNELS,
+        "maze": maze_json
+    }
 
-Json = json.dumps(donnees)
+    Json = json.dumps(donnees)
+    return Json
