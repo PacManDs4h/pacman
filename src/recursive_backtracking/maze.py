@@ -1,6 +1,6 @@
 import random
 import time
-from .test_maze import checkSymmetry
+from test_maze import checkSymmetry
 
 # Use these characters for displaying the maze:
 EMPTY = ' '
