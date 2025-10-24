@@ -1,6 +1,6 @@
 from create_image import createImage
-from maze import Maze
-from json_maze import getJson
+from .maze import Maze
+from .json_maze import getJson
 import json
 
 WIDTH = 39

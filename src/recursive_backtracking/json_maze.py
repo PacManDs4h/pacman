@@ -1,6 +1,5 @@
 import json
-from maze import Maze
-from test_maze import propConnexite, checkSymmetry
+from .test_maze import propConnexite, checkSymmetry
 
 
 def maze_to_tabjson(maze, width, height):

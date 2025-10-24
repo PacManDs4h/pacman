@@ -1,8 +1,5 @@
 import random
 import time
-from test_maze import propConnexite, checkSymmetry
-# from json_maze import maze_to_tabjson
-import json
 
 # Use these characters for displaying the maze:
 EMPTY = ' '
