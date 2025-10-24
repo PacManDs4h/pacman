@@ -155,6 +155,21 @@ class Maze:
             if self.maze.get((center_x + 1, tunnelY), WALL) == WALL:
                 self.maze[(center_x + 1, tunnelY)] = EMPTY
 
+    def addHouse(self):
+        pattern = [
+            "EEEEEEE",
+            "EWWEWWE",
+            "EWEEEWE",
+            "EWWWWWE",
+            "EEEEEEE"
+        ]
+        corner_x = self.width // 2 - 3
+        corner_y = self.height // 2 - 2
+
+        for dy, row in enumerate(pattern):
+            for dx, cell in enumerate(row):
+                self.maze[(corner_x + dx, corner_y + dy)] = WALL if cell == 'W' else EMPTY
+
     def generate_maze(self, seed=None):
         """Generate a Pacman-like maze with optional seed."""
         if seed is None:
@@ -170,6 +185,7 @@ class Maze:
         center_y = self.addTunnels()
         self.mirrorMaze()  # Apply symmetry after all modifications
         self.applyCenterTunnels(center_y)  # Add center tunnels symmetrically
+        self.addHouse()
         if not checkSymmetry(self.maze, self.width, self.height):
             print("Warning: Maze is not symmetric!")
         else:
