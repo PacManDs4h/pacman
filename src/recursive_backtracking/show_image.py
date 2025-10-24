@@ -4,7 +4,7 @@ from maze import Maze
 from json_maze import getJson
 from urllib.request import urlopen
 
-WIDTH = 28
+WIDTH = 27
 HEIGHT = 36
 NB_CYCLES = 10
 NUM_WRAP_TUNNELS = 2
