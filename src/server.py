@@ -1,5 +1,8 @@
-from recursive_backtracking.json_maze import getJson
-from recursive_backtracking.maze import Maze
+import sys, os
+sys.path.insert(0, "recursive_backtracking")
+
+from json_maze import getJson
+from maze import Maze
 from flask import Flask, request, jsonify
 
 
