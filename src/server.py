@@ -1,8 +1,9 @@
+import sys
+
 sys.path.insert(0, "recursive_backtracking")
 
 from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
 from maze import Maze
-import sys
 import os
 import uuid
 import json
