@@ -12,7 +12,7 @@ class Maze:
     def __init__(self, width, height, nb_cycles, nb_wrap_tunnels, nb_center_tunnels):
         self.maze = {}
         self.width = width
-        self.height = height
+        self.height = height + 1
         self.nb_cycles = nb_cycles
         self.nb_wrap_tunnels = nb_wrap_tunnels
         self.nb_center_tunnels = nb_center_tunnels
