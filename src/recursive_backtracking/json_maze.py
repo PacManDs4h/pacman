@@ -1,5 +1,4 @@
 import json
-from test_maze import propConnexite, checkSymmetry
 
 
 def maze_to_tabjson(maze, width, height):
@@ -10,9 +9,8 @@ def maze_to_tabjson(maze, width, height):
 
 
 def getJson(maze):
-    (nb_cellules_empty, nb_cellules_wall, p) = propConnexite(
-        maze.maze, maze.width, maze.height)
-    symmetry = checkSymmetry(maze.maze, maze.width, maze.height)
+    (nb_cellules_empty, nb_cellules_wall, p) = maze.propConnexite()
+    symmetry = maze.checkSymmetry()
     maze_json = maze_to_tabjson(maze.maze, maze.width, maze.height)
     donnees = {
         "height": maze.height,

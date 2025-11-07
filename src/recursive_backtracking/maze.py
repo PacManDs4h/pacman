@@ -1,6 +1,5 @@
 import random
 import time
-from test_maze import checkSymmetry
 
 # Use these characters for displaying the maze:
 EMPTY = ' '
@@ -168,7 +167,30 @@ class Maze:
 
         for dy, row in enumerate(pattern):
             for dx, cell in enumerate(row):
-                self.maze[(corner_x + dx, corner_y + dy)] = WALL if cell == 'W' else EMPTY
+                self.maze[(corner_x + dx, corner_y + dy)
+                          ] = WALL if cell == 'W' else EMPTY
+
+    def checkSymmetry(self):
+        """Check if the maze is symmetric around the central column."""
+        half = self.width // 2
+        for x in range(half):
+            for y in range(self.height):
+                if self.maze[(x, y)] != self.maze[(self.width - 1 - x, y)]:
+                    print(f"Asymmetry detected at ({x}, {
+                          y}) and ({self.width - 1 - x}, {y})")
+                    return False
+        return True
+
+    def propConnexite(self):
+        nb_cellules_empty = 0
+        nb_cellules_wall = 0
+        for x in range(self.width):
+            for y in range(1, self.height - 1):
+                if (self.maze[(x, y)] == ' '):
+                    nb_cellules_empty += 1
+                else:
+                    nb_cellules_wall += 1
+        return (nb_cellules_empty, nb_cellules_wall, nb_cellules_wall / nb_cellules_empty)
 
     def generate_maze(self, seed=None):
         """Generate a Pacman-like maze with optional seed."""
@@ -186,7 +208,7 @@ class Maze:
         self.mirrorMaze()  # Apply symmetry after all modifications
         self.applyCenterTunnels(center_y)  # Add center tunnels symmetrically
         self.addHouse()
-        if not checkSymmetry(self.maze, self.width, self.height):
+        if not self.checkSymmetry():
             print("Warning: Maze is not symmetric!")
         else:
             print("Symétrie: OK")
