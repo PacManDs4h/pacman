@@ -178,7 +178,7 @@ class Maze:
                 if self.maze[(x, y)] != self.maze[(self.width - 1 - x, y)]:
                     print(
                         f"Asymmetry detected at ({x}, {y}) "
-                        f"and ({self.width - 1 - x}, {y})")"
+                        f"and ({self.width - 1 - x}, {y})")
                     return False
         return True
 
