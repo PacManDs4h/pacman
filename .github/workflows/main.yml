@@ -1,0 +1,50 @@
+name: CI/CD Pipeline pour Maze API
+
+# Déclencheurs: s'exécute à chaque push ou pull request sur la branche 'main'
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # PREMIER JOB: Tester le code
+  test:
+    name: Exécutution des tests Pytest
+    # Utilise la dernière version d'Ubuntu pour exécuter les tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code du dépôt
+        uses: actions/checkout@v4
+
+      - name: Configuration Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Installation des dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src/requirements.txt
+      
+      - name: Pytest
+        run: |
+          cd src/recursive_backtracking/  
+          pytest
+
+  # DEUXIÈME JOB: Déployer (seulement si 'test' a réussi)
+  deploy:
+    name: Déployer sur Render
+    runs-on: ubuntu-latest
+    
+    needs: test 
+    
+    # Condition: Ne se lance que pour un PUSH sur la branche MAIN
+    # (On ne déploie pas pour les Pull Requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Déclencher le déploiement Render
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
