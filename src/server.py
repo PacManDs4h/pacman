@@ -1,3 +1,5 @@
+sys.path.insert(0, "recursive_backtracking")
+
 from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
 from maze import Maze
 import sys
@@ -11,7 +13,6 @@ from pymongo import MongoClient, ASCENDING
 # --- accès à ton code existant ---
 # (Dockerfile copie tout sous /app ; ici server.py est dans /app ;
 #  le dossier /app/recursive_backtracking est donc au même niveau)
-sys.path.insert(0, "recursive_backtracking")
 
 app = Flask(__name__)
 
