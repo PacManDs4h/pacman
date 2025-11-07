@@ -15,3 +15,8 @@ def test_size_maze():
 
     # On vérifie la taille réelle du dictionnaire maze.maze
     assert len(maze.maze) == expected_width * expected_height
+
+
+maze = Maze(19, 39, 10, 3, 5)
+maze.generate_maze()
+print(maze.get_maze_score())

@@ -16,6 +16,10 @@ class Maze:
         self.nb_cycles = nb_cycles
         self.nb_wrap_tunnels = nb_wrap_tunnels
         self.nb_center_tunnels = nb_center_tunnels
+        self.seed = None  # Pour stocker le seed utilisé comme ID
+        # Ces attributs seront initialisés dans addHouse()
+        self.corner_x = None
+        self.corner_y = None
 
     def initialize_maze(self):
         """Initialize a filled-in maze data structure."""
@@ -155,6 +159,11 @@ class Maze:
                 self.maze[(center_x + 1, tunnelY)] = EMPTY
 
     def addHouse(self):
+        """
+        Ajoute la "maison" centrale.
+        IMPORTANT: Stocke les coordonnées de la maison dans self.corner_x et self.corner_y
+        pour que d'autres fonctions (comme le scoring) puissent les trouver.
+        """
         pattern = [
             "EEEEEEE",
             "EWWEWWE",
@@ -162,13 +171,27 @@ class Maze:
             "EWWWWWE",
             "EEEEEEE"
         ]
-        corner_x = self.width // 2 - 3
-        corner_y = self.height // 2 - 2
+
+        # CHANGEMENT : Celles-ci sont maintenant des attributs (self.)
+        self.corner_x = self.width // 2 - 3
+        self.corner_y = self.height // 2 - 2
 
         for dy, row in enumerate(pattern):
             for dx, cell in enumerate(row):
-                self.maze[(corner_x + dx, corner_y + dy)
+                self.maze[(self.corner_x + dx, self.corner_y + dy)
                           ] = WALL if cell == 'W' else EMPTY
+        # Coordonnées de la "porte" (le 'E' central sur la rangée du haut)
+        door_x = self.corner_x + 3
+        door_y = self.corner_y  # C'est la rangée du haut du pattern
+
+        # Coordonnées de la cellule JUSTE AU-DESSUS de la porte
+        cell_above_door_x = door_x
+        cell_above_door_y = door_y - 1
+
+        # Forcer cette cellule à être VIDE pour garantir une connexion.
+        # On vérifie si elle est dans les limites, bien que ça devrait l'être.
+        if cell_above_door_y > 0:
+            self.maze[(cell_above_door_x, cell_above_door_y)] = EMPTY
 
     def checkSymmetry(self):
         """Check if the maze is symmetric around the central column."""
@@ -176,9 +199,11 @@ class Maze:
         for x in range(half):
             for y in range(self.height):
                 if self.maze[(x, y)] != self.maze[(self.width - 1 - x, y)]:
+                    # Correction de la f-string sur plusieurs lignes
                     print(
                         f"Asymmetry detected at ({x}, {y}) "
-                        f"and ({self.width - 1 - x}, {y})")
+                        f"and ({self.width - 1 - x}, {y})"
+                    )
                     return False
         return True
 
@@ -186,19 +211,27 @@ class Maze:
         nb_cellules_empty = 0
         nb_cellules_wall = 0
         for x in range(self.width):
-            for y in range(1, self.height - 1):
+            for y in range(1, self.height - 1):  # Ignorer le haut et le bas
                 if (self.maze[(x, y)] == ' '):
                     nb_cellules_empty += 1
                 else:
                     nb_cellules_wall += 1
+
+        if nb_cellules_empty == 0:  # Éviter la division par zéro
+            return (0, nb_cellules_wall, 0)
+
         return (nb_cellules_empty, nb_cellules_wall, nb_cellules_wall / nb_cellules_empty)
 
     def generate_maze(self, seed=None):
         """Generate a Pacman-like maze with optional seed."""
         if seed is None:
-            random.seed(time.time())  # Use system time for random seed
+            # Générer un seed basé sur l'heure
+            self.seed = int(time.time() * 1000)
         else:
-            random.seed(seed)
+            self.seed = seed
+
+        # Utiliser le seed pour la génération
+        random.seed(self.seed)
 
         self.initialize_maze()  # Initialize maze correctly
         hasVisited = [(1, 1)]
@@ -208,9 +241,102 @@ class Maze:
         center_y = self.addTunnels()
         self.mirrorMaze()  # Apply symmetry after all modifications
         self.applyCenterTunnels(center_y)  # Add center tunnels symmetrically
+
+        # addHouse est appelé, définissant self.corner_x et self.corner_y
         self.addHouse()
+
         if not self.checkSymmetry():
             print("Warning: Maze is not symmetric!")
         else:
             print("Symétrie: OK")
         return self.maze
+
+    # --- NOUVELLES FONCTIONS POUR LA NOTATION ---
+
+    def count_dead_ends(self):
+        """Compte le nombre total de culs-de-sac dans le labyrinthe."""
+        deadEnds = 0
+        # Parcourir tout le labyrinthe, pas seulement la moitié
+        for x in range(1, self.width - 1):
+            for y in range(1, self.height - 1):
+                if self.maze[(x, y)] == EMPTY:
+                    wallsAround = sum(1 for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]
+                                      if self.maze.get((x + dx, y + dy), WALL) == WALL)
+                    if wallsAround == 3:
+                        deadEnds += 1
+        return deadEnds
+
+    def check_house_accessibility(self):
+        """Vérifie si la "porte" de la maison est bien ouverte sur un couloir."""
+
+        # S'assure que addHouse a bien été appelé
+        if self.corner_x is None or self.corner_y is None:
+            print("Erreur: check_house_accessibility() appelée avant addHouse()")
+            return False
+
+        # Coordonnées de la "porte" (basées sur addHouse)
+        door_x = self.corner_x + 3
+        door_y = self.corner_y  # C'est "EEEEEEE", donc la porte est au-dessus
+
+        # Coordonnée de la cellule juste au-dessus de la porte
+        cell_above_door_x = door_x
+        cell_above_door_y = door_y - 1
+
+        # Vérifier si la porte est EMPTY (elle devrait l'être)
+        # ET si la cellule au-dessus est EMPTY (connectée au reste)
+        is_door_open = self.maze.get((door_x, door_y), WALL) == EMPTY
+        is_connected = self.maze.get(
+            (cell_above_door_x, cell_above_door_y), WALL) == EMPTY
+
+        return is_door_open and is_connected
+
+    def get_maze_score(self):
+        """Calcule un score de qualité pour le labyrinthe généré."""
+
+        # --- 1. Score d'Ouverture (max 2 points) ---
+        # Basé sur propConnexite. Un ratio murs/vides bas est bon.
+        # Disons qu'un ratio idéal < 0.8
+        empty_cells, wall_cells, ratio = self.propConnexite()
+
+        # Normalisation du score de ratio:
+        # Ratio 0.7 -> 2 pts
+        # Ratio 1.0 -> 1 pt
+        # Ratio 1.3 -> 0 pt
+        openness_score = max(0, min(2, (1.3 - ratio) * (2 / 0.6)))
+
+        # --- 2. Score de Fluidité (max 2 points) ---
+        # Basé sur le nombre de culs-de-sac. Moins c'est mieux.
+        total_cells = (self.width - 2) * (self.height - 2)
+        dead_ends = self.count_dead_ends()
+        dead_end_ratio = 0
+        if total_cells > 0:
+            dead_end_ratio = dead_ends / total_cells  # Pourcentage de culs-de-sac
+
+        # Normalisation du score de fluidité:
+        # Ratio 0% -> 2 pts
+        # Ratio 5% -> 1 pt
+        # Ratio 10% -> 0 pt
+        fluidity_score = max(0, min(2, (0.10 - dead_end_ratio) * (2 / 0.10)))
+
+        # --- 3. Score de Structure (max 1 point) ---
+        # La maison est-elle accessible ?
+        structure_score = 1 if self.check_house_accessibility() else 0
+
+        # --- Score Total ---
+        total_score = round(
+            openness_score + fluidity_score + structure_score, 2)
+        if total_score > 5.0:
+            total_score = 5.0  # Plafonner à 5
+
+        return {
+            "id_seed": self.seed,
+            "total_score_on_5": total_score,
+            "details": {
+                "openness_score": round(openness_score, 2),
+                "fluidity_score": round(fluidity_score, 2),
+                "structure_score": round(structure_score, 2),
+                "wall_to_empty_ratio": round(ratio, 3),
+                "dead_end_count": dead_ends,
+                "house_accessible": self.check_house_accessibility()
+            }
+        }
