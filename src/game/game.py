@@ -27,18 +27,6 @@ def main():
         except Exception:
             return False
         
-    def direction_to_angle(direction):
-        if direction == (0, -1):  # Up
-            return 90
-        elif direction == (0, 1):  # Down
-            return 270
-        elif direction == (-1, 0):  # Left
-            return 180
-        elif direction == (1, 0):  # Right
-            return 0
-        else:
-            return 0  # Default angle for no movement
-        
     # toroidal difference helper (returns shortest signed distance between a and b on a ring of size wrap)
     def toroidal_delta(a, b, wrap):
         d = a - b
@@ -76,8 +64,9 @@ def main():
     # movement speed (cells per second). Increase to make Pacman faster.
     MOVE_SPEED_CELLS_PER_SEC = 15.0
 
-    # starting grid cell (integer indices)
-    pac_x, pac_y = (1, 1)
+    # starting grid cell (integer indices) at bottom middle
+    pac_x, pac_y = (width // 2 - 2, height - 2)
+
 
     # pixel position of Pacman's center (floats for smooth movement)
     pac_px = pac_x * CELL_SIZE + CELL_SIZE / 2
@@ -87,6 +76,11 @@ def main():
     current_dir = (0, 0)
     next_dir = (0, 0)
     # pacman = pygame.image.load("sprites/pacman_left.png")
+    small_pellet = pygame.image.load("sprites/small_pellet.png")
+    big_pellet = pygame.image.load("sprites/big_pellet.png")
+    small_pellet = pygame.transform.scale(small_pellet, (CELL_SIZE, CELL_SIZE))
+    big_pellet = pygame.transform.scale(big_pellet, (CELL_SIZE, CELL_SIZE))
+
     pacman = pygame.image.load("sprites/pacman_full.png")
     pacman = pygame.transform.scale(pacman, (CELL_SIZE, CELL_SIZE))
     pacman_right = pygame.image.load("sprites/pacman_right.png")
@@ -96,12 +90,37 @@ def main():
     pacman_left = pygame.transform.rotate(pacman_right, 180)
     pacman_up = pygame.transform.rotate(pacman_right, 90)
 
-    directions = {
-        (0, -1): 'up',
-        (-1, 0): 'left',
-        (0, 1): 'down',
-        (1, 0): 'right'
-    }
+    # score and pellets initialization: place a pellet on every empty cell (maze cell == 0)
+    score = 0
+
+    pellets = set()
+    big_pellets = set()
+    for y, row in enumerate(maze):
+        for x, v in enumerate(row):
+            try:
+                val = int(v)
+            except Exception:
+                val = 1
+            if val == 0:
+                if x != 0 and x != width - 1 and y != 0 and y != height - 1:
+                    pellets.add((x, y))
+    # remove pellet at starting position so pacman doesn't immediately eat one here
+    pellets.discard((pac_x, pac_y))
+    # remove around ghost house 7 * 5
+    for gy in range(height // 2 - 2, height // 2 + 3):
+        for gx in range(width // 2 - 3, width // 2 + 4):
+            pellets.discard((gx, gy))
+    # place 4 big pellets near corners
+    big_pellet_positions = [(1,1), (1,height-2), (width-2,1), (width-2,height-2)]
+    for pos in big_pellet_positions:
+        big_pellets.add(pos)
+        # remove pellet at big pellet position so pacman doesn't immediately eat one here
+        pellets.discard(pos)
+    
+
+    # prepare font for score display
+    pygame.font.init()
+    score_font = pygame.font.SysFont(None, max(18, CELL_SIZE // 2))
 
     running = True
     while running:
@@ -130,7 +149,6 @@ def main():
         # compute current integer cell center (in pixels)
         center_x = pac_x * CELL_SIZE + CELL_SIZE / 2
         center_y = pac_y * CELL_SIZE + CELL_SIZE / 2
-
 
         # are we exactly (or close enough) at the center of current cell? (use toroidal distance)
         at_center = abs(toroidal_delta(pac_px, center_x, screen_w)) < 1e-6 and abs(toroidal_delta(pac_py, center_y, screen_h)) < 1e-6
@@ -198,6 +216,14 @@ def main():
             pac_px = pac_x * CELL_SIZE + CELL_SIZE / 2
             pac_py = pac_y * CELL_SIZE + CELL_SIZE / 2
 
+        # If Pacman is on a pellet, eat it
+        if (pac_x, pac_y) in pellets:
+            pellets.remove((pac_x, pac_y))
+            score += 10
+        elif (pac_x, pac_y) in big_pellets:
+            big_pellets.remove((pac_x, pac_y))
+            score += 50
+
         # draw
         screen.fill((0, 0, 0))
         wall_color = (34, 49, 184)
@@ -213,13 +239,26 @@ def main():
                     pygame.draw.rect(screen, wall_color, rect)
                 else:
                     pygame.draw.rect(screen, floor_color, rect)
+                    # draw pellet only if it still exists
+                    if (x, y) in pellets:
+                        screen.blit(small_pellet, rect)
+                    elif (x, y) in big_pellets:
+                        screen.blit(big_pellet, rect)
+        # draw ghost house door
+        door_rect = pygame.Rect((width // 2) * CELL_SIZE, (height // 2 - 1) * CELL_SIZE, CELL_SIZE, CELL_SIZE )
+        pygame.draw.rect(screen, (252, 181, 255), door_rect)
 
-        # center = (int(pac_px), int(pac_py))
+        # draw pacman
         center = (int(pac_px) - CELL_SIZE // 2, int(pac_py) - CELL_SIZE // 2)
-        # radius = int(CELL_SIZE * 0.5)
-        # pygame.draw.circle(screen, (254, 248, 84), center, radius)
-
         screen.blit(pacman, center)
+
+        # draw score
+        try:
+            score_surf = score_font.render(f"Score: {score}", True, (255, 255, 255))
+            screen.blit(score_surf, (4, 4))
+        except Exception:
+            # if font/rendering fails, ignore to avoid crashing the game
+            pass
 
         pygame.display.flip()
         clock.tick(60)
