@@ -60,9 +60,11 @@ def main():
     screen = pygame.display.set_mode((screen_w, screen_h))
     pygame.display.set_caption("Pacman - arrow keys to move")
     clock = pygame.time.Clock()
+    # target frames per second (lower => less CPU)
+    FPS = 60
 
     # movement speed (cells per second). Increase to make Pacman faster.
-    MOVE_SPEED_CELLS_PER_SEC = 15.0
+    MOVE_SPEED_CELLS_PER_SEC = 7.0
 
     # starting grid cell (integer indices) at bottom middle
     pac_x, pac_y = (width // 2 - 2, height - 2)
@@ -122,10 +124,41 @@ def main():
     pygame.font.init()
     score_font = pygame.font.SysFont(None, max(18, CELL_SIZE // 2))
 
+    # colors used for background drawing
+    wall_color = (34, 49, 184)
+    floor_color = (0, 0, 0)
+
+    # create a background Surface with walls/floor drawn once (cheaper than redrawing grid each frame)
+    bg = pygame.Surface((screen_w, screen_h))
+    bg.fill(floor_color)
+    for y, row in enumerate(maze):
+        for x, v in enumerate(row):
+            try:
+                val = int(v)
+            except Exception:
+                val = 1
+            if val == 1:
+                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                pygame.draw.rect(bg, wall_color, rect)
+    # draw ghost house door on background as it's static
+    door_x = width // 2
+    door_y = height // 2 - 1
+    door_rect = pygame.Rect(door_x * CELL_SIZE, door_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+    pygame.draw.rect(bg, (252, 181, 255), door_rect)
+
+    # helper to identify ghost-house door cell
+    def is_ghost_house_door(x, y):
+        wx, wy = wrap_coords(x, y)
+        return (wx, wy) == (door_x, door_y)
+
+    # score surface cache to avoid rerendering each frame
+    last_score = None
+    score_surf = None
+
     running = True
     while running:
-        # dt in seconds since last frame
-        dt = clock.tick(60) / 1000.0
+        # dt in seconds since last frame (use FPS cap)
+        dt = clock.tick(FPS) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -161,7 +194,8 @@ def main():
             # try to take the player's desired turn first
             if next_dir != (0, 0):
                 tx, ty = pac_x + next_dir[0], pac_y + next_dir[1]
-                if cell_free(tx, ty):
+                # block entering the ghost house through the door for Pacman
+                if cell_free(tx, ty) and not is_ghost_house_door(tx, ty):
                     current_dir = next_dir
                     # pacman = pygame.image.load(f"sprites/pacman_{directions[next_dir]}.png")
                     # pacman = pacman_down or pacman_up or pacman_left or pacman_right
@@ -172,12 +206,14 @@ def main():
                 else:
                     # if desired direction blocked, keep going current_dir if possible
                     cx, cy = pac_x + current_dir[0], pac_y + current_dir[1]
-                    if not cell_free(cx, cy):
+                    # also prevent continuing into the ghost house door
+                    if not cell_free(cx, cy) or is_ghost_house_door(cx, cy):
                         current_dir = (0, 0)
             else:
                 # no next direction requested: check if current_dir still possible
                 cx, cy = pac_x + current_dir[0], pac_y + current_dir[1]
-                if not cell_free(cx, cy):
+                # also prevent continuing into the ghost house door
+                if not cell_free(cx, cy) or is_ghost_house_door(cx, cy):
                     current_dir = (0, 0)
 
         # move along current_dir if allowed
@@ -224,44 +260,35 @@ def main():
             big_pellets.remove((pac_x, pac_y))
             score += 50
 
-        # draw
-        screen.fill((0, 0, 0))
-        wall_color = (34, 49, 184)
-        floor_color = (0, 0, 0)
-        for y, row in enumerate(maze):
-            for x, v in enumerate(row):
-                try:
-                    val = int(v)
-                except Exception:
-                    val = 1
-                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                if val == 1:
-                    pygame.draw.rect(screen, wall_color, rect)
-                else:
-                    pygame.draw.rect(screen, floor_color, rect)
-                    # draw pellet only if it still exists
-                    if (x, y) in pellets:
-                        screen.blit(small_pellet, rect)
-                    elif (x, y) in big_pellets:
-                        screen.blit(big_pellet, rect)
-        # draw ghost house door
-        door_rect = pygame.Rect((width // 2) * CELL_SIZE, (height // 2 - 1) * CELL_SIZE, CELL_SIZE, CELL_SIZE )
-        pygame.draw.rect(screen, (252, 181, 255), door_rect)
+        # draw background (walls + floor + door) from cached Surface
+        screen.blit(bg, (0, 0))
+
+        # draw pellets by iterating only active pellets (cheaper than scanning full grid)
+        sp = small_pellet
+        bp = big_pellet
+        cs = CELL_SIZE
+        for (x, y) in pellets:
+            rect = pygame.Rect(x * cs, y * cs, cs, cs)
+            screen.blit(sp, rect)
+        for (x, y) in big_pellets:
+            rect = pygame.Rect(x * cs, y * cs, cs, cs)
+            screen.blit(bp, rect)
 
         # draw pacman
         center = (int(pac_px) - CELL_SIZE // 2, int(pac_py) - CELL_SIZE // 2)
         screen.blit(pacman, center)
 
-        # draw score
-        try:
-            score_surf = score_font.render(f"Score: {score}", True, (255, 255, 255))
+        # render score only when it changed
+        if score != last_score:
+            try:
+                score_surf = score_font.render(f"Score: {score}", True, (255, 255, 255))
+            except Exception:
+                score_surf = None
+            last_score = score
+        if score_surf:
             screen.blit(score_surf, (4, 4))
-        except Exception:
-            # if font/rendering fails, ignore to avoid crashing the game
-            pass
 
         pygame.display.flip()
-        clock.tick(60)
 
     pygame.quit()
 
