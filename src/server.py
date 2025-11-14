@@ -17,19 +17,19 @@ from pymongo import MongoClient, ASCENDING
 
 app = Flask(__name__)
 
-# ===== MongoDB Atlas =====
-MONGO_URI = os.getenv("MONGODB_URI")
-if not MONGO_URI:
-    raise RuntimeError("MONGODB_URI manquant (Render → Environment)")
+# # ===== MongoDB Atlas =====
+# MONGO_URI = os.getenv("MONGODB_URI")
+# if not MONGO_URI:
+#     raise RuntimeError("MONGODB_URI manquant (Render → Environment)")
 
-mongo = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-db = mongo.get_default_database()        # DB prise depuis l’URI
-mazes = db["mazes"]
-mazes.create_index([("created_at", ASCENDING)])
+# mongo = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+# db = mongo.get_default_database()        # DB prise depuis l’URI
+# mazes = db["mazes"]
+# mazes.create_index([("created_at", ASCENDING)])
 
 
-def now_iso():
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+# def now_iso():
+#     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 # ===== Routes “utiles” =====
 
