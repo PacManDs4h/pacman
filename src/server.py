@@ -1,15 +1,15 @@
+from pymongo import MongoClient, ASCENDING
+from flask import Flask, request, jsonify, abort
+from datetime import datetime, timezone
+import json
+import uuid
+import os
+from maze import Maze
+from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
 import sys
 
 sys.path.insert(0, "recursive_backtracking")
 
-from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
-from maze import Maze
-import os
-import uuid
-import json
-from datetime import datetime, timezone
-from flask import Flask, request, jsonify, abort
-from pymongo import MongoClient, ASCENDING
 
 # --- accès à ton code existant ---
 # (Dockerfile copie tout sous /app ; ici server.py est dans /app ;
@@ -42,7 +42,7 @@ def index():
 @app.route("/healthz", methods=["GET"])
 def healthz():
     try:
-        mongo.admin.command("ping")
+        # mongo.admin.command("ping")
         return "ok", 200
     except Exception as e:
         return ("mongo error: " + str(e), 500)
@@ -52,54 +52,17 @@ def healthz():
 
 @app.route("/generate", methods=["GET"])
 def generate():
-    # Lis les paramètres (avec tes valeurs par défaut actuelles)
-    width = int(request.args.get("width",  39))
+    # paramètres par défaut
+    width = int(request.args.get("width", 39))
     height = int(request.args.get("height", 19))
-    # tes 3 paramètres spécifiques au constructeur Maze
-    nb_cycles = int(request.args.get("cycles",        10))
-    nb_wrap_tunnels = int(request.args.get("wrap_tunnels",   2))
-    nb_center_tunnels = int(request.args.get("center_tunnels", 5))
-    seed = request.args.get("seed")  # optionnel
+    nbcycle = int(request.args.get("nbcycle", 10))
+    nb_wrap_tunnels = int(request.args.get("nb_wrap_tunnels", 2))
+    nb_center_tunnels = int(request.args.get("nb_center_tunnels", 5))
 
-    # Génère le labyrinthe via ton code
-    mz = Maze(width, height, nb_cycles, nb_wrap_tunnels, nb_center_tunnels)
-    # ta méthode accepte un seed optionnel selon ton implémentation
-    # (dans ton fichier, generate_maze(seed=None) existe)
-    mz.generate_maze(seed=seed)
+    maze = Maze(width, height, nbcycle, nb_wrap_tunnels, nb_center_tunnels)
+    maze.generate_maze()
 
-    # Récupère le JSON produit par ton code
-    raw = getJson(mz)  # string JSON selon ton json_maze.py
-    try:
-        data = json.loads(raw)
-    except Exception:
-        # si jamais raw n’était pas un JSON valide (peu probable), on stocke brut
-        data = {"raw": raw}
-
-    # Document à stocker
-    maze_id = str(uuid.uuid4())
-    doc = {
-        "_id": maze_id,
-        "created_at": now_iso(),
-        "params": {
-            "width": width, "height": height,
-            "cycles": nb_cycles,
-            "wrap_tunnels": nb_wrap_tunnels,
-            "center_tunnels": nb_center_tunnels,
-            "seed": seed
-        },
-        # on stocke exactement ce que ton getJson produit (avec stats + "maze")
-        "data": data
-    }
-
-    mazes.insert_one(doc)
-
-    # Réponse client : id + même payload utile
-    return jsonify({
-        "id": maze_id,
-        "created_at": doc["created_at"],
-        "params": doc["params"],
-        "data": data
-    }), 200
+    return getJson(maze)
 
 # ===== Lecture par ID =====
 
