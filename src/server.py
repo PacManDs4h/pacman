@@ -1,3 +1,6 @@
+import sys
+
+sys.path.insert(0, "recursive_backtracking")
 from pymongo import MongoClient, ASCENDING
 from flask import Flask, request, jsonify, abort
 from datetime import datetime, timezone
@@ -6,9 +9,6 @@ import uuid
 import os
 from maze import Maze
 from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
-import sys
-
-sys.path.insert(0, "recursive_backtracking")
 
 
 # --- accès à ton code existant ---
