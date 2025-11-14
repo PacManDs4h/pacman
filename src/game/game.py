@@ -1,6 +1,7 @@
 import json
 from urllib.request import urlopen
 import pygame
+import spritesheet
 
 WIDTH = 19
 HEIGHT = 23
@@ -9,7 +10,7 @@ NB_CYCLES = 10
 NUM_WRAP_TUNNELS = 2
 NUM_CENTER_TUNNELS = 5
 
-url = f"https://pacmaz-s1-o.onrender.com/generate?width={WIDTH}&height={HEIGHT}&cycles={NB_CYCLES}&wrap_tunnels={NUM_WRAP_TUNNELS}&center_tunnels={NUM_CENTER_TUNNELS}"
+url = f"https://pacmaz-s1-o.onrender.com/generate?width={WIDTH}&height={HEIGHT}&nbcycle={NB_CYCLES}&nb_wrap_tunnels={NUM_WRAP_TUNNELS}&nb_center_tunnels={NUM_CENTER_TUNNELS}"
 response = urlopen(url)
 data_json = json.loads(response.read())
 
@@ -78,6 +79,15 @@ def main():
     current_dir = (0, 0)
     next_dir = (0, 0)
     # pacman = pygame.image.load("sprites/pacman_left.png")
+
+    # pacmanSpriteSheet = spritesheet.spritesheet('sprites/pacman_spriteSheet.png')
+    mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.png')
+    mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16)
+    for i in range(len(mapImages)):
+        mapImages[i] = pygame.transform.scale(mapImages[i], (CELL_SIZE, CELL_SIZE))
+    ghost_door = mapSpriteSheet.image_at((32, 16, 16, 16))
+    ghost_door = pygame.transform.scale(ghost_door, (CELL_SIZE, CELL_SIZE))
+
     small_pellet = pygame.image.load("sprites/small_pellet.png")
     big_pellet = pygame.image.load("sprites/big_pellet.png")
     small_pellet = pygame.transform.scale(small_pellet, (CELL_SIZE, CELL_SIZE))
@@ -91,7 +101,6 @@ def main():
     pacman_left = pygame.transform.flip(pacman_right, True, False)
     pacman_up = pygame.transform.rotate(pacman_right, 90)
     pacman_down = pygame.transform.flip(pacman_up, False, True)
-
 
     red_ghost_left = pygame.image.load("sprites/red_ghost_left1.png")
     red_ghost_left = pygame.transform.scale(red_ghost_left, (CELL_SIZE, CELL_SIZE))
@@ -131,8 +140,13 @@ def main():
     win_font = pygame.font.SysFont(None, 90)
 
     # colors used for background drawing
-    wall_color = (34, 49, 184)
+    # wall_color = (34, 49, 184)
     floor_color = (0, 0, 0)
+
+    directions = [(1,0),(-1,0),(0,1),(0,-1)]
+    # directions2 = [(1,1),(-1,-1),(1,-1),(-1,1)]
+    nbAdjacentWalls = 0
+    left, right, up, down = 0, 0, 0, 0
 
     # create a background Surface with walls/floor drawn once (cheaper than redrawing grid each frame)
     bg = pygame.Surface((screen_w, screen_h))
@@ -144,13 +158,75 @@ def main():
             except Exception:
                 val = 1
             if val == 1:
-                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(bg, wall_color, rect)
+                # check surrounding cells to choose correct wall tile
+                for dx, dy in directions:
+                    nx, ny = x + dx, y + dy
+                    if not cell_free(nx, ny):
+                        nbAdjacentWalls += 1
+                        if (dx, dy) == (-1, 0):
+                            left = 1
+                        if (dx, dy) == (1, 0):
+                            right = 1
+                        if (dx, dy) == (0, -1):
+                            up = 1
+                        if (dx, dy) == (0, 1):
+                            down = 1
+                # choose tile based on wall neighbors
+                if nbAdjacentWalls == 0:
+                    tile = 0  # isolated wall
+                elif nbAdjacentWalls == 1:
+                    if left:
+                        tile = 2
+                    elif right:
+                        tile = 4
+                    elif up:
+                        tile = 8
+                    else:  # down
+                        tile = 1
+                elif nbAdjacentWalls == 2:
+                    if left and right:
+                        tile = 6
+                    elif up and down:
+                        tile = 9
+                    elif left and up:
+                        tile = 10
+                    elif left and down:
+                        tile = 3
+                    elif right and up:
+                        tile = 12
+                    else:  # right and down
+                        tile = 5
+                elif nbAdjacentWalls == 3:
+                    if not left:
+                        tile = 13
+                    elif not right:
+                        tile = 11
+                    elif not up:
+                        tile = 7
+                    else:  # not down
+                        tile = 14
+                else:  # nbAdjacentWalls >= 4
+                    # if nbAdjacentWalls >= 4:
+                    #     for dx, dy in directions2:
+                    #         nx, ny = x + dx, y + dy
+                    #         if not cell_free(nx, ny):
+                    #             tile = None
+                    #             break
+                    # else:
+                    tile = 15
+                nbAdjacentWalls = 0
+                left, right, up, down = 0, 0, 0, 0
+                if tile is not None:
+                    bg.blit(mapImages[tile], (x * CELL_SIZE, y * CELL_SIZE))
+                # draw wall tile
+
+    
     # draw ghost house door on background as it's static
     door_x = width // 2
     door_y = height // 2 - 1
-    door_rect = pygame.Rect(door_x * CELL_SIZE, door_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-    pygame.draw.rect(bg, (252, 181, 255), door_rect)
+    bg.blit(ghost_door, (door_x * CELL_SIZE, door_y * CELL_SIZE))
+    # door_rect = pygame.Rect(door_x * CELL_SIZE, door_y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+    # pygame.draw.rect(bg, (252, 181, 255), door_rect)
 
     # helper to identify ghost-house door cell
     def is_ghost_house_door(x, y):
@@ -330,7 +406,6 @@ def main():
                 x = 4 + i * (CELL_SIZE + 4)
                 y = screen_h - CELL_SIZE
                 screen.blit(pacman_left, (x, y))
-
 
         if win:
             win_surf = win_font.render(f"you win !", True, (255, 255, 255))
