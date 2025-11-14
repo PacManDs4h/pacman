@@ -9,7 +9,7 @@ NB_CYCLES = 10
 NUM_WRAP_TUNNELS = 2
 NUM_CENTER_TUNNELS = 5
 
-url = f"https://pacmaz-s1-o.onrender.com/generate?width={WIDTH}&height={HEIGHT}&nb_cycle={NB_CYCLES}&num_tunnels_wrap={NUM_WRAP_TUNNELS}&num_tunnels_centre={NUM_CENTER_TUNNELS}"
+url = f"https://pacmaz-s1-o.onrender.com/generate?width={WIDTH}&height={HEIGHT}&cycles={NB_CYCLES}&wrap_tunnels={NUM_WRAP_TUNNELS}&center_tunnels={NUM_CENTER_TUNNELS}"
 response = urlopen(url)
 data_json = json.loads(response.read())
 
@@ -88,12 +88,17 @@ def main():
     pacman_right = pygame.image.load("sprites/pacman_right.png")
     pacman_right = pygame.transform.scale(pacman_right, (CELL_SIZE, CELL_SIZE))
 
-    pacman_down = pygame.transform.rotate(pacman_right, 270)
-    pacman_left = pygame.transform.rotate(pacman_right, 180)
+    pacman_left = pygame.transform.flip(pacman_right, True, False)
     pacman_up = pygame.transform.rotate(pacman_right, 90)
+    pacman_down = pygame.transform.flip(pacman_up, False, True)
+
+
+    red_ghost_left = pygame.image.load("sprites/red_ghost_left1.png")
+    red_ghost_left = pygame.transform.scale(red_ghost_left, (CELL_SIZE, CELL_SIZE))
 
     # score and pellets initialization: place a pellet on every empty cell (maze cell == 0)
     score = 0
+    lives = 3
 
     pellets = set()
     big_pellets = set()
@@ -123,6 +128,7 @@ def main():
     # prepare font for score display
     pygame.font.init()
     score_font = pygame.font.SysFont(None, max(18, CELL_SIZE // 2))
+    win_font = pygame.font.SysFont(None, 90)
 
     # colors used for background drawing
     wall_color = (34, 49, 184)
@@ -155,6 +161,8 @@ def main():
     last_score = None
     score_surf = None
 
+    win = False
+
     running = True
     while running:
         # dt in seconds since last frame (use FPS cap)
@@ -177,88 +185,115 @@ def main():
                     next_dir = (1, 0)
                     # pacman = pygame.image.load("pacman_right.png")
 
-        # helper to check if a grid cell is free (with wrap-around)
+        if not win:
 
-        # compute current integer cell center (in pixels)
-        center_x = pac_x * CELL_SIZE + CELL_SIZE / 2
-        center_y = pac_y * CELL_SIZE + CELL_SIZE / 2
+            ghost_x = width // 2
+            ghost_y = height // 2 - 2
+            ghost_pos = (ghost_x * CELL_SIZE, ghost_y * CELL_SIZE)
+            
+            # compute current integer cell center (in pixels)
+            center_x = pac_x * CELL_SIZE + CELL_SIZE / 2
+            center_y = pac_y * CELL_SIZE + CELL_SIZE / 2
 
-        # are we exactly (or close enough) at the center of current cell? (use toroidal distance)
-        at_center = abs(toroidal_delta(pac_px, center_x, screen_w)) < 1e-6 and abs(toroidal_delta(pac_py, center_y, screen_h)) < 1e-6
+            # are we exactly (or close enough) at the center of current cell? (use toroidal distance)
+            at_center = abs(toroidal_delta(pac_px, center_x, screen_w)) < 1e-6 and abs(toroidal_delta(pac_py, center_y, screen_h)) < 1e-6
 
-        # if at center, we can change direction: prefer next_dir
-        if at_center:
-            # snap to exact center to avoid float drift
-            pac_px = center_x
-            pac_py = center_y
-            # try to take the player's desired turn first
-            if next_dir != (0, 0):
-                tx, ty = pac_x + next_dir[0], pac_y + next_dir[1]
-                # block entering the ghost house through the door for Pacman
-                if cell_free(tx, ty) and not is_ghost_house_door(tx, ty):
-                    current_dir = next_dir
-                    # pacman = pygame.image.load(f"sprites/pacman_{directions[next_dir]}.png")
-                    # pacman = pacman_down or pacman_up or pacman_left or pacman_right
-                    pacman = {(0, -1): pacman_up,
-                              (0, 1): pacman_down,
-                              (-1, 0): pacman_left,
-                                (1, 0): pacman_right}[next_dir]
+            # if at center, we can change direction: prefer next_dir
+            if at_center:
+                # snap to exact center to avoid float drift
+                pac_px = center_x
+                pac_py = center_y
+                # try to take the player's desired turn first
+                if next_dir != (0, 0):
+                    tx, ty = pac_x + next_dir[0], pac_y + next_dir[1]
+                    # block entering the ghost house through the door for Pacman
+                    if cell_free(tx, ty) and not is_ghost_house_door(tx, ty):
+                        current_dir = next_dir
+                        # pacman = pygame.image.load(f"sprites/pacman_{directions[next_dir]}.png")
+                        # pacman = pacman_down or pacman_up or pacman_left or pacman_right
+                        pacman = {(0, -1): pacman_up,
+                                (0, 1): pacman_down,
+                                (-1, 0): pacman_left,
+                                    (1, 0): pacman_right}[next_dir]
+                    else:
+                        # if desired direction blocked, keep going current_dir if possible
+                        cx, cy = pac_x + current_dir[0], pac_y + current_dir[1]
+                        # also prevent continuing into the ghost house door
+                        if not cell_free(cx, cy) or is_ghost_house_door(cx, cy):
+                            current_dir = (0, 0)
                 else:
-                    # if desired direction blocked, keep going current_dir if possible
+                    # no next direction requested: check if current_dir still possible
                     cx, cy = pac_x + current_dir[0], pac_y + current_dir[1]
                     # also prevent continuing into the ghost house door
                     if not cell_free(cx, cy) or is_ghost_house_door(cx, cy):
                         current_dir = (0, 0)
+
+            # move along current_dir if allowed
+            if current_dir != (0, 0):
+                speed_px = MOVE_SPEED_CELLS_PER_SEC * CELL_SIZE
+                # desired movement in pixels this frame
+                move_x = current_dir[0] * speed_px * dt
+                move_y = current_dir[1] * speed_px * dt
+
+                # compute target cell (wrapped) and its center for the next cell in movement direction
+                target_cell_x = (pac_x + current_dir[0]) % width
+                target_cell_y = (pac_y + current_dir[1]) % height
+                target_cx = target_cell_x * CELL_SIZE + CELL_SIZE / 2
+                target_cy = target_cell_y * CELL_SIZE + CELL_SIZE / 2
+
+                # distance remaining to the target center (use toroidal minimal distance)
+                dist_x = toroidal_delta(target_cx, pac_px, screen_w)
+                dist_y = toroidal_delta(target_cy, pac_py, screen_h)
+
+                # if movement in this frame would overshoot the target center, snap to center and update grid cell
+                if (abs(move_x) >= abs(dist_x) and current_dir[0] != 0) or (abs(move_y) >= abs(dist_y) and current_dir[1] != 0):
+                    # snap to target center (and wrap grid coords)
+                    pac_px = target_cx % screen_w
+                    pac_py = target_cy % screen_h
+                    pac_x = (pac_x + current_dir[0]) % width
+                    pac_y = (pac_y + current_dir[1]) % height
+                    # after arriving, allow immediate turn in the same frame on next loop iteration
+                else:
+                    pac_px += move_x
+                    pac_py += move_y
+                    # keep pixel position wrapped so drawing stays on-screen
+                    pac_px %= screen_w
+                    pac_py %= screen_h
             else:
-                # no next direction requested: check if current_dir still possible
-                cx, cy = pac_x + current_dir[0], pac_y + current_dir[1]
-                # also prevent continuing into the ghost house door
-                if not cell_free(cx, cy) or is_ghost_house_door(cx, cy):
-                    current_dir = (0, 0)
+                # not moving: keep pac centered on its grid cell (avoid drift)
+                pac_px = pac_x * CELL_SIZE + CELL_SIZE / 2
+                pac_py = pac_y * CELL_SIZE + CELL_SIZE / 2
 
-        # move along current_dir if allowed
-        if current_dir != (0, 0):
-            speed_px = MOVE_SPEED_CELLS_PER_SEC * CELL_SIZE
-            # desired movement in pixels this frame
-            move_x = current_dir[0] * speed_px * dt
-            move_y = current_dir[1] * speed_px * dt
+            # If Pacman is on a pellet, eat it
+            if (pac_x, pac_y) in pellets:
+                pellets.remove((pac_x, pac_y))
+                score += 10
+            elif (pac_x, pac_y) in big_pellets:
+                big_pellets.remove((pac_x, pac_y))
+                score += 50
 
-            # compute target cell (wrapped) and its center for the next cell in movement direction
-            target_cell_x = (pac_x + current_dir[0]) % width
-            target_cell_y = (pac_y + current_dir[1]) % height
-            target_cx = target_cell_x * CELL_SIZE + CELL_SIZE / 2
-            target_cy = target_cell_y * CELL_SIZE + CELL_SIZE / 2
+            # if pacman on a ghost
+            if (pac_x, pac_y) == (ghost_x, ghost_y):
+                lives -= 1
+                # reset pacman position
+                pac_x, pac_y = (width // 2 - 2, height - 2)
+                pac_px = pac_x * CELL_SIZE + CELL_SIZE / 2
+                pac_py = pac_y * CELL_SIZE + CELL_SIZE / 2
+                current_dir = (0, 0)
+                next_dir = (0, 0)
+                if lives <= 0:
+                    running = False
 
-            # distance remaining to the target center (use toroidal minimal distance)
-            dist_x = toroidal_delta(target_cx, pac_px, screen_w)
-            dist_y = toroidal_delta(target_cy, pac_py, screen_h)
+            if not pellets and not big_pellets:
+                # all pellets eaten, end game
+                win = True
+                # running = False
 
-            # if movement in this frame would overshoot the target center, snap to center and update grid cell
-            if (abs(move_x) >= abs(dist_x) and current_dir[0] != 0) or (abs(move_y) >= abs(dist_y) and current_dir[1] != 0):
-                # snap to target center (and wrap grid coords)
-                pac_px = target_cx % screen_w
-                pac_py = target_cy % screen_h
-                pac_x = (pac_x + current_dir[0]) % width
-                pac_y = (pac_y + current_dir[1]) % height
-                # after arriving, allow immediate turn in the same frame on next loop iteration
-            else:
-                pac_px += move_x
-                pac_py += move_y
-                # keep pixel position wrapped so drawing stays on-screen
-                pac_px %= screen_w
-                pac_py %= screen_h
-        else:
-            # not moving: keep pac centered on its grid cell (avoid drift)
-            pac_px = pac_x * CELL_SIZE + CELL_SIZE / 2
-            pac_py = pac_y * CELL_SIZE + CELL_SIZE / 2
 
-        # If Pacman is on a pellet, eat it
-        if (pac_x, pac_y) in pellets:
-            pellets.remove((pac_x, pac_y))
-            score += 10
-        elif (pac_x, pac_y) in big_pellets:
-            big_pellets.remove((pac_x, pac_y))
-            score += 50
+
+
+
+        # --- Drawing code ---
 
         # draw background (walls + floor + door) from cached Surface
         screen.blit(bg, (0, 0))
@@ -278,6 +313,8 @@ def main():
         center = (int(pac_px) - CELL_SIZE // 2, int(pac_py) - CELL_SIZE // 2)
         screen.blit(pacman, center)
 
+        screen.blit(red_ghost_left, ghost_pos)
+
         # render score only when it changed
         if score != last_score:
             try:
@@ -287,6 +324,17 @@ def main():
             last_score = score
         if score_surf:
             screen.blit(score_surf, (4, 4))
+
+        if lives > 0:
+            for i in range(lives - 1):
+                x = 4 + i * (CELL_SIZE + 4)
+                y = screen_h - CELL_SIZE
+                screen.blit(pacman_left, (x, y))
+
+
+        if win:
+            win_surf = win_font.render(f"you win !", True, (255, 255, 255))
+            screen.blit(win_surf, (screen_w // 2 - win_surf.get_width() // 2, screen_h // 2 - win_surf.get_height() // 2))
 
         pygame.display.flip()
 
