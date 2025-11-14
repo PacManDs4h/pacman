@@ -55,9 +55,9 @@ def generate():
     # paramètres par défaut
     width = int(request.args.get("width", 39))
     height = int(request.args.get("height", 19))
-    nbcycle = int(request.args.get("nbcycle", 10))
-    nb_wrap_tunnels = int(request.args.get("nb_wrap_tunnels", 2))
-    nb_center_tunnels = int(request.args.get("nb_center_tunnels", 5))
+    nbcycle = int(request.args.get("nb_cycles", 10))
+    nb_wrap_tunnels = int(request.args.get("num_tunnels_wrap", 2))
+    nb_center_tunnels = int(request.args.get("num_tunnels_centre", 5))
 
     maze = Maze(width, height, nbcycle, nb_wrap_tunnels, nb_center_tunnels)
     maze.generate_maze()
