@@ -1,4 +1,4 @@
-import game2
+import Game
 import pygame
 
 SCREEN_WIDTH = 608
@@ -13,21 +13,20 @@ def main():
     screen = pygame.display.set_mode(size)
  
     pygame.display.set_caption("Pacman")
-    # pygame.mouse.set_visible(False)
+    pygame.font.init()
  
     # Create our objects and set the data
     running = True
     clock = pygame.time.Clock()
  
     # Create an instance of the Game class
-    game = game2.Game2(screen)
-
+    game = Game.Game(screen)
  
     # Main game loop
     while running:
-    # while True:
  
         game.dt = clock.tick(60) / 1000.0
+
         # Process events (keystrokes, mouse clicks, etc)
         running = game.process_events()
 
