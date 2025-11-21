@@ -5,7 +5,7 @@ class Pacman():
     def __init__(self, game):
         self.game = game
         
-        self.MOVE_SPEED_CELLS_PER_SEC = 15.0
+        self.MOVE_SPEED_CELLS_PER_SEC = 7.0
         self.pac_x, self.pac_y = (game.width // 2 - 2, game.height - 2)
 
         # pixel position of Pacman's center (floats for smooth movement)
@@ -39,8 +39,8 @@ class Pacman():
         pacman = pygame.image.load("sprites/pacman_full.png")
         self.pacman_sprite = pygame.transform.scale(pacman, (self.game.CELL_SIZE, self.game.CELL_SIZE))
         pacman_right = pygame.image.load("sprites/pacman_right.png")
-        self.pacman_right = pygame.transform.scale(pacman_right, (self.game.CELL_SIZE, self.game.CELL_SIZE))
 
+        self.pacman_right = pygame.transform.scale(pacman_right, (self.game.CELL_SIZE, self.game.CELL_SIZE))
         self.pacman_left = pygame.transform.flip(self.pacman_right, True, False)
         self.pacman_up = pygame.transform.rotate(self.pacman_right, 90)
         self.pacman_down = pygame.transform.flip(self.pacman_up, False, True)

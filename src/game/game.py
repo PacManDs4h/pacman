@@ -73,14 +73,14 @@ class Game:
         mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.png')
         self.mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16)
         for i in range(len(self.mapImages)):
-            self.mapImages[i] = pygame.transform.scale(self.mapImages[i], (self.CELL_SIZE, self.CELL_SIZE))
+            self.mapImages[i] = pygame.transform.scale(self.mapImages[i], (self.CELL_SIZE, self.CELL_SIZE)).convert()
         ghost_door = mapSpriteSheet.image_at((32, 16, 16, 16))
-        self.ghost_door = pygame.transform.scale(ghost_door, (self.CELL_SIZE, self.CELL_SIZE))
+        self.ghost_door = pygame.transform.scale(ghost_door, (self.CELL_SIZE, self.CELL_SIZE)).convert()
 
         small_pellet = pygame.image.load("sprites/small_pellet.png")
         big_pellet = pygame.image.load("sprites/big_pellet.png")
-        self.small_pellet = pygame.transform.scale(small_pellet, (self.CELL_SIZE, self.CELL_SIZE))
-        self.big_pellet = pygame.transform.scale(big_pellet, (self.CELL_SIZE, self.CELL_SIZE))
+        self.small_pellet = pygame.transform.scale(small_pellet, (self.CELL_SIZE, self.CELL_SIZE)).convert()
+        self.big_pellet = pygame.transform.scale(big_pellet, (self.CELL_SIZE, self.CELL_SIZE)).convert()
 
 
     def generate_pelet(self):

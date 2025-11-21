@@ -13,6 +13,7 @@ def main():
     screen = pygame.display.set_mode(size)
  
     pygame.display.set_caption("Pacman")
+    pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP])
     pygame.font.init()
  
     # Create our objects and set the data
@@ -24,7 +25,8 @@ def main():
  
     # Main game loop
     while running:
- 
+        
+        # Pause for the next frame
         game.dt = clock.tick(60) / 1000.0
 
         # Process events (keystrokes, mouse clicks, etc)
@@ -35,9 +37,6 @@ def main():
  
         # Draw the current frame
         game.display_frame()
- 
-        # Pause for the next frame
-        clock.tick(60)
  
     # Close window and exit
     pygame.quit()
