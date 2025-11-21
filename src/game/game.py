@@ -78,9 +78,7 @@ def main():
     # movement directions: current movement and next desired direction
     current_dir = (0, 0)
     next_dir = (0, 0)
-    # pacman = pygame.image.load("sprites/pacman_left.png")
 
-    # pacmanSpriteSheet = spritesheet.spritesheet('sprites/pacman_spriteSheet.png')
     mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.png')
     mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16)
     for i in range(len(mapImages)):
@@ -250,16 +248,12 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     next_dir = (0, -1)
-                    # pacman = pygame.image.load("pacman_up.png")
                 elif event.key == pygame.K_DOWN:
                     next_dir = (0, 1)
-                    # pacman = pygame.image.load("pacman_down.png")
                 elif event.key == pygame.K_LEFT:
                     next_dir = (-1, 0)
-                    # pacman = pygame.image.load("pacman_left.png")
                 elif event.key == pygame.K_RIGHT:
                     next_dir = (1, 0)
-                    # pacman = pygame.image.load("pacman_right.png")
 
         if not win:
 
@@ -285,8 +279,6 @@ def main():
                     # block entering the ghost house through the door for Pacman
                     if cell_free(tx, ty) and not is_ghost_house_door(tx, ty):
                         current_dir = next_dir
-                        # pacman = pygame.image.load(f"sprites/pacman_{directions[next_dir]}.png")
-                        # pacman = pacman_down or pacman_up or pacman_left or pacman_right
                         pacman = {(0, -1): pacman_up,
                                 (0, 1): pacman_down,
                                 (-1, 0): pacman_left,
