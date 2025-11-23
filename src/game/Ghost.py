@@ -18,7 +18,7 @@ class Ghost():
     def load_sprites(self):
         if self.color == "red":
             ghost_image = pygame.image.load("sprites/red_ghost_left1.png")
-            self.ghost_sprite = pygame.transform.scale(ghost_image, (self.game.CELL_SIZE, self.game.CELL_SIZE)).convert()
+            self.ghost_sprite = pygame.transform.scale(ghost_image, (self.game.CELL_SIZE, self.game.CELL_SIZE))
         # Additional colors can be added here
     
     def update(self):

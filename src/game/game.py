@@ -8,7 +8,7 @@ import Ghost
 class Game:
     def __init__(self, screen):
         self.MAZE_WIDTH = 19
-        self.MAZE_HEIGHT = 23
+        self.MAZE_HEIGHT = 21 
         self.MAZE_NB_CYCLES = 10
         self.MAZE_NUM_WRAP_TUNNELS = 2
         self.MAZE_NUM_CENTER_TUNNELS = 5
@@ -44,18 +44,27 @@ class Game:
         self.bg = None
         self.pellets_screen = pygame.Surface((self.screen_w, self.screen_h))
 
+
         self.generate_maze()
 
-        self.CELL_SIZE = max(8, min(32, self.MAX_PIX // max(1, self.width), self.MAX_PIX // max(1, self.height)))
+        self.CELL_SIZE = max(8, min(32, self.MAX_PIX // max(1, self.width), self.MAX_PIX // max(1, self.height + 3)))
+        print(f"Cell size: {self.CELL_SIZE}")
 
-        self.score_font = pygame.font.SysFont(None, max(18, self.CELL_SIZE // 2))
-        self.win_font = pygame.font.SysFont(None, 90)
+        self.game_screen = pygame.Surface((self.MAZE_WIDTH * self.CELL_SIZE, self.MAZE_HEIGHT * self.CELL_SIZE))
+        self.game_screen_w = self.game_screen.get_width()
+        self.game_screen_h = self.game_screen.get_height()
+
+        self.score_font = pygame.font.Font("fonts/emulogic.ttf", max(18, self.CELL_SIZE // 2))
+        self.win_font = pygame.font.Font("fonts/emulogic.ttf", 90)
 
         self.load_map_sprites()
         self.pacman = Pacman.Pacman(self)
         self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2)
         self.generate_pelet()
         self.add_walls()
+
+        self.offset_x = (self.screen_w // 2) - (self.game_screen_w // 2)
+        self.offset_y = (self.screen_h // 2) - (self.game_screen_h // 2)
 
 
 
@@ -117,7 +126,8 @@ class Game:
         left, right, up, down = 0, 0, 0, 0
 
         # create a background Surface with walls/floor drawn once (cheaper than redrawing grid each frame)
-        self.bg = pygame.Surface((self.screen_w, self.screen_h))
+        # self.bg = pygame.Surface((self.screen_w, self.screen_h))
+        self.bg = pygame.Surface((self.game_screen_w, self.game_screen_h))
         self.bg.fill(floor_color)
         for y, row in enumerate(self.maze):
             for x, v in enumerate(row):
@@ -259,29 +269,32 @@ class Game:
 
     def display_frame(self):
 
+        self.screen.fill((0, 0, 0))
         # draw background (walls + floor + door) from cached Surface
-        self.screen.blit(self.pellets_screen, (0, 0))
+        self.game_screen.blit(self.pellets_screen, (0, 0))
 
         # draw pacman
         center = (int(self.pacman.pac_px) - self.CELL_SIZE // 2, int(self.pacman.pac_py) - self.CELL_SIZE // 2)
-        self.screen.blit(self.pacman.pacman_sprite, center)
+        self.game_screen.blit(self.pacman.pacman_sprite, center)
 
-        self.screen.blit(self.red_ghost.ghost_sprite, (int(self.red_ghost.ghost_x * self.CELL_SIZE), int(self.red_ghost.ghost_y * self.CELL_SIZE)))
+        self.game_screen.blit(self.red_ghost.ghost_sprite, (int(self.red_ghost.ghost_x * self.CELL_SIZE), int(self.red_ghost.ghost_y * self.CELL_SIZE)))
+
+        self.screen.blit(self.game_screen, (self.offset_x, self.offset_y))
 
         # render score only when it changed
         if self.score != self.last_score:
             try:
-                self.score_surf = self.score_font.render(f"Score: {self.score}", True, (255, 255, 255))
+                self.score_surf = self.score_font.render(f"Score {self.score}", False, (255, 255, 255))
             except Exception:
                 self.score_surf = None
             self.last_score = self.score
         if self.score_surf:
-            self.screen.blit(self.score_surf, (4, 4))
+            self.screen.blit(self.score_surf, (self.offset_x, self.offset_y - 30))
 
         if self.lives > 0:
             for i in range(self.lives - 1):
-                x = 4 + i * (self.CELL_SIZE + 4)
-                y = self.screen_h - self.CELL_SIZE
+                x = self.offset_x + 4 + i * (self.CELL_SIZE + 4)
+                y = self.game_screen_h + self.offset_y + 4
                 self.screen.blit(self.pacman.pacman_left, (x, y))
 
         if self.win:

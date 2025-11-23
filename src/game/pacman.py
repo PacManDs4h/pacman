@@ -79,7 +79,7 @@ class Pacman():
         self.center_y = self.pac_y * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
 
         # are we exactly (or close enough) at the center of current cell? (use toroidal distance)
-        at_center = abs(self.game.toroidal_delta(self.pac_px, self.center_x, self.game.screen_w)) < 1e-6 and abs(self.game.toroidal_delta(self.pac_py, self.center_y, self.game.screen_h)) < 1e-6
+        at_center = abs(self.game.toroidal_delta(self.pac_px, self.center_x, self.game.game_screen_w)) < 1e-6 and abs(self.game.toroidal_delta(self.pac_py, self.center_y, self.game.game_screen_h)) < 1e-6
 
         # if at center, we can change direction: prefer next_dir
         if at_center:
@@ -123,14 +123,14 @@ class Pacman():
             self.target_cy = self.target_cell_y * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
 
             # distance remaining to the target center (use toroidal minimal distance)
-            self.dist_x = self.game.toroidal_delta(self.target_cx, self.pac_px, self.game.screen_w)
-            self.dist_y = self.game.toroidal_delta(self.target_cy, self.pac_py, self.game.screen_h)
+            self.dist_x = self.game.toroidal_delta(self.target_cx, self.pac_px, self.game.game_screen_w)
+            self.dist_y = self.game.toroidal_delta(self.target_cy, self.pac_py, self.game.game_screen_h)
 
             # if movement in this frame would overshoot the target center, snap to center and update grid cell
             if (abs(self.move_x) >= abs(self.dist_x) and self.current_dir[0] != 0) or (abs(self.move_y) >= abs(self.dist_y) and self.current_dir[1] != 0):
                 # snap to target center (and wrap grid coords)
-                self.pac_px = self.target_cx % self.game.screen_w
-                self.pac_py = self.target_cy % self.game.screen_h
+                self.pac_px = self.target_cx % self.game.game_screen_w
+                self.pac_py = self.target_cy % self.game.game_screen_h
                 self.pac_x = (self.pac_x + self.current_dir[0]) % self.game.width
                 self.pac_y = (self.pac_y + self.current_dir[1]) % self.game.height
                 # after arriving, allow immediate turn in the same frame on next loop iteration
@@ -138,8 +138,8 @@ class Pacman():
                 self.pac_px += self.move_x
                 self.pac_py += self.move_y
                 # keep pixel position wrapped so drawing stays on-screen
-                self.pac_px %= self.game.screen_w
-                self.pac_py %= self.game.screen_h
+                self.pac_px %= self.game.game_screen_w
+                self.pac_py %= self.game.game_screen_h
         else:
             # not moving: keep pac centered on its grid cell (avoid drift)
             self.pac_px = self.pac_x * self.game.CELL_SIZE + self.game.CELL_SIZE / 2

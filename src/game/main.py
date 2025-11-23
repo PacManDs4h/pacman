@@ -1,8 +1,8 @@
 import Game
 import pygame
 
-SCREEN_WIDTH = 608
-SCREEN_HEIGHT = 736
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 780
 
 def main():
     """ Main program function. """
