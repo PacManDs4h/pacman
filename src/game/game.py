@@ -11,7 +11,7 @@ class Game:
         self.MAZE_HEIGHT = 21 
         self.MAZE_NB_CYCLES = 10
         self.MAZE_NUM_WRAP_TUNNELS = 2
-        self.MAZE_NUM_CENTER_TUNNELS = 5
+        self.MAZE_NUM_CENTER_TUNNELS = 7
 
         self.MAX_PIX = 800
 
@@ -48,7 +48,6 @@ class Game:
         self.generate_maze()
 
         self.CELL_SIZE = max(8, min(32, self.MAX_PIX // max(1, self.width), self.MAX_PIX // max(1, self.height + 3)))
-        print(f"Cell size: {self.CELL_SIZE}")
 
         self.game_screen = pygame.Surface((self.MAZE_WIDTH * self.CELL_SIZE, self.MAZE_HEIGHT * self.CELL_SIZE))
         self.game_screen_w = self.game_screen.get_width()
@@ -107,7 +106,7 @@ class Game:
         # remove pellet at starting position so pacman doesn't immediately eat one here
         self.pellets.discard((self.pacman.pac_x, self.pacman.pac_y))
         # remove around ghost house 7 * 5
-        for gy in range(self.height // 2 - 2, self.height // 2 + 3):
+        for gy in range(self.height // 2 - 3, self.height // 2 + 3):
             for gx in range(self.width // 2 - 3, self.width // 2 + 4):
                 self.pellets.discard((gx, gy))
         # place 4 big pellets near corners
@@ -120,15 +119,9 @@ class Game:
 
     def add_walls(self):
         floor_color = (0, 0, 0)
-        directions = [(1,0),(-1,0),(0,1),(0,-1)]
-        # directions2 = [(1,1),(-1,-1),(1,-1),(-1,1)]
-        nbAdjacentWalls = 0
-        left, right, up, down = 0, 0, 0, 0
-
-        # create a background Surface with walls/floor drawn once (cheaper than redrawing grid each frame)
-        # self.bg = pygame.Surface((self.screen_w, self.screen_h))
         self.bg = pygame.Surface((self.game_screen_w, self.game_screen_h))
         self.bg.fill(floor_color)
+
         for y, row in enumerate(self.maze):
             for x, v in enumerate(row):
                 try:
@@ -136,67 +129,18 @@ class Game:
                 except Exception:
                     val = 1
                 if val == 1:
-                    # check surrounding cells to choose correct wall tile
-                    for dx, dy in directions:
-                        nx, ny = x + dx, y + dy
-                        if not self.cell_free(nx, ny):
-                            nbAdjacentWalls += 1
-                            if (dx, dy) == (-1, 0):
-                                left = 1
-                            if (dx, dy) == (1, 0):
-                                right = 1
-                            if (dx, dy) == (0, -1):
-                                up = 1
-                            if (dx, dy) == (0, 1):
-                                down = 1
-                    # choose tile based on wall neighbors
-                    if nbAdjacentWalls == 0:
-                        tile = 0  # isolated wall
-                    elif nbAdjacentWalls == 1:
-                        if left:
-                            tile = 2
-                        elif right:
-                            tile = 4
-                        elif up:
-                            tile = 8
-                        else:  # down
-                            tile = 1
-                    elif nbAdjacentWalls == 2:
-                        if left and right:
-                            tile = 6
-                        elif up and down:
-                            tile = 9
-                        elif left and up:
-                            tile = 10
-                        elif left and down:
-                            tile = 3
-                        elif right and up:
-                            tile = 12
-                        else:  # right and down
-                            tile = 5
-                    elif nbAdjacentWalls == 3:
-                        if not left:
-                            tile = 13
-                        elif not right:
-                            tile = 11
-                        elif not up:
-                            tile = 7
-                        else:  # not down
-                            tile = 14
-                    else:  # nbAdjacentWalls >= 4
-                        # if nbAdjacentWalls >= 4:
-                        #     for dx, dy in directions2:
-                        #         nx, ny = x + dx, y + dy
-                        #         if not cell_free(nx, ny):
-                        #             tile = None
-                        #             break
-                        # else:
-                        tile = 15
-                    nbAdjacentWalls = 0
-                    left, right, up, down = 0, 0, 0, 0
-                    if tile is not None:
-                        self.bg.blit(self.mapImages[tile], (x * self.CELL_SIZE, y * self.CELL_SIZE))
-                    # draw wall tile
+                    tile = 0
+                    if not self.cell_free(x, y-1): tile |= 1   # haut
+                    if not self.cell_free(x+1, y): tile |= 2   # droite
+                    if not self.cell_free(x, y+1): tile |= 4   # bas
+                    if not self.cell_free(x-1, y): tile |= 8   # gauche
+
+                    if x == 0 and ((y-1 >= 0 and self.cell_free(x, y-1)) or (y+1 < self.height and self.cell_free(x, y+1))):
+                        tile |= 8
+                    if x == self.width-1 and ((y-1 >= 0 and self.cell_free(x, y-1)) or (y+1 < self.height and self.cell_free(x, y+1))):
+                        tile |= 2
+
+                    self.bg.blit(self.mapImages[tile], (x * self.CELL_SIZE, y * self.CELL_SIZE))
 
         # draw ghost house door on background as it's static
         self.door_x = self.width // 2
@@ -208,20 +152,12 @@ class Game:
 
     # helper to identify ghost-house door cell
     def is_ghost_house_door(self, x, y):
-        wx, wy = self.wrap_coords(x, y)
-        return (wx, wy) == (self.door_x, self.door_y)
-
-    def wrap_coords(self, x, y):
-        # wrap coordinates on torus
-        return (x % self.width, y % self.height)
+        return (x, y) == (self.door_x, self.door_y)
 
     def cell_free(self, x, y):
-        wx, wy = self.wrap_coords(x, y)
-        try:
-            return int(self.maze[wy][wx]) == 0
-        except Exception:
-            return False
-
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            return True
+        return int(self.maze[y][x]) == 0
 
     def toroidal_delta(self, a, b, wrap):
         d = a - b
@@ -230,7 +166,6 @@ class Game:
         elif d < -wrap / 2:
             d += wrap
         return d
-
 
     def process_events(self):
         for event in pygame.event.get():

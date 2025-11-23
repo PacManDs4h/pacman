@@ -74,76 +74,94 @@ class Pacman():
         self.next_dir = (0, 0)
 
     def update(self):
-        """ Update the player location. """
-        self.center_x = self.pac_x * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
-        self.center_y = self.pac_y * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
 
-        # are we exactly (or close enough) at the center of current cell? (use toroidal distance)
-        at_center = abs(self.game.toroidal_delta(self.pac_px, self.center_x, self.game.game_screen_w)) < 1e-6 and abs(self.game.toroidal_delta(self.pac_py, self.center_y, self.game.game_screen_h)) < 1e-6
+        cs = self.game.CELL_SIZE
+        self.speed_px = self.MOVE_SPEED_CELLS_PER_SEC * cs
 
-        # if at center, we can change direction: prefer next_dir
+        # centre actuel de Pac-Man dans le monde pixel
+        pac_center_x = self.pac_x * cs + cs / 2
+        pac_center_y = self.pac_y * cs + cs / 2
+
+        # savoir si Pac-Man est exactement au centre
+        at_center = abs(self.pac_px - pac_center_x) < 0.1 and abs(self.pac_py - pac_center_y) < 0.1
+
+        # Si Pac-Man est centré : gérer les changements de direction
         if at_center:
-            # snap to exact center to avoid float drift
-            self.pac_px = self.center_x
-            self.pac_py = self.center_y
-            # try to take the player's desired turn first
+
+            # Réaligner pour éviter les erreurs de flottants
+            self.pac_px = pac_center_x
+            self.pac_py = pac_center_y
+
+            # Le joueur veut tourner ?
             if self.next_dir != (0, 0):
-                tx, ty = self.pac_x + self.next_dir[0], self.pac_y + self.next_dir[1]
-                # block entering the ghost house through the door for Pacman
+                tx = (self.pac_x + self.next_dir[0])
+                ty = (self.pac_y + self.next_dir[1])
+
+                # Peut-on tourner ?
                 if self.game.cell_free(tx, ty) and not self.game.is_ghost_house_door(tx, ty):
+                    # On tourne
                     self.current_dir = self.next_dir
                     self.pacman_sprite = {(0, -1): self.pacman_up,
                             (0, 1): self.pacman_down,
                             (-1, 0): self.pacman_left,
                                 (1, 0): self.pacman_right}[self.next_dir]
                 else:
-                    # if desired direction blocked, keep going current_dir if possible
-                    cx, cy = self.pac_x + self.current_dir[0], self.pac_y + self.current_dir[1]
-                    # also prevent continuing into the ghost house door
+                    # Sinon, essayer de continuer tout droit
+                    cx = self.pac_x + self.current_dir[0]
+                    cy = self.pac_y + self.current_dir[1]
                     if not self.game.cell_free(cx, cy) or self.game.is_ghost_house_door(cx, cy):
                         self.current_dir = (0, 0)
+
             else:
-                # no next direction requested: check if current_dir still possible
-                cx, cy = self.pac_x + self.current_dir[0], self.pac_y + self.current_dir[1]
-                # also prevent continuing into the ghost house door
+                # Aucune direction, vérifier si continuer est possible
+                cx = self.pac_x + self.current_dir[0]
+                cy = self.pac_y + self.current_dir[1]
                 if not self.game.cell_free(cx, cy) or self.game.is_ghost_house_door(cx, cy):
                     self.current_dir = (0, 0)
 
-        # move along current_dir if allowed
+        # Déplacement (si une direction active existe)
         if self.current_dir != (0, 0):
-            self.speed_px = self.MOVE_SPEED_CELLS_PER_SEC * self.game.CELL_SIZE
-            # desired movement in pixels this frame
-            self.move_x = self.current_dir[0] * self.speed_px * self.game.dt
-            self.move_y = self.current_dir[1] * self.speed_px * self.game.dt
 
-            # compute target cell (wrapped) and its center for the next cell in movement direction
-            self.target_cell_x = (self.pac_x + self.current_dir[0]) % self.game.width
-            self.target_cell_y = (self.pac_y + self.current_dir[1]) % self.game.height
-            self.target_cx = self.target_cell_x * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
-            self.target_cy = self.target_cell_y * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
+            dx, dy = self.current_dir
 
-            # distance remaining to the target center (use toroidal minimal distance)
-            self.dist_x = self.game.toroidal_delta(self.target_cx, self.pac_px, self.game.game_screen_w)
-            self.dist_y = self.game.toroidal_delta(self.target_cy, self.pac_py, self.game.game_screen_h)
+            # mouvement voulu cette frame
+            move_x = dx * self.speed_px * self.game.dt
+            move_y = dy * self.speed_px * self.game.dt
 
-            # if movement in this frame would overshoot the target center, snap to center and update grid cell
-            if (abs(self.move_x) >= abs(self.dist_x) and self.current_dir[0] != 0) or (abs(self.move_y) >= abs(self.dist_y) and self.current_dir[1] != 0):
-                # snap to target center (and wrap grid coords)
-                self.pac_px = self.target_cx % self.game.game_screen_w
-                self.pac_py = self.target_cy % self.game.game_screen_h
-                self.pac_x = (self.pac_x + self.current_dir[0]) % self.game.width
-                self.pac_y = (self.pac_y + self.current_dir[1]) % self.game.height
-                # after arriving, allow immediate turn in the same frame on next loop iteration
+            # prochaine cellule
+            next_cell_x = (self.pac_x + dx) % self.game.width
+            next_cell_y = (self.pac_y + dy) % self.game.height
+
+            # centre de la prochaine cellule
+            target_cx = next_cell_x * cs + cs / 2
+            target_cy = next_cell_y * cs + cs / 2
+
+            # distance à ce centre (en tenant compte du warp)
+            dist_x = self.game.toroidal_delta(target_cx, self.pac_px, self.game.game_screen_w)
+            dist_y = self.game.toroidal_delta(target_cy, self.pac_py, self.game.game_screen_h)
+
+            # Est-ce qu'on dépasserait le centre ?
+            overshoot_x = (dx != 0 and abs(move_x) >= abs(dist_x))
+            overshoot_y = (dy != 0 and abs(move_y) >= abs(dist_y))
+
+            if overshoot_x or overshoot_y:
+                # On arrive exactement au centre de la prochaine case
+                self.pac_px = target_cx % self.game.game_screen_w
+                self.pac_py = target_cy % self.game.game_screen_h
+
+                # mise à jour des coordonnées grille
+                self.pac_x = next_cell_x
+                self.pac_y = next_cell_y
+
             else:
-                self.pac_px += self.move_x
-                self.pac_py += self.move_y
-                # keep pixel position wrapped so drawing stays on-screen
-                self.pac_px %= self.game.game_screen_w
-                self.pac_py %= self.game.game_screen_h
+                # Avancer normalement
+                self.pac_px = (self.pac_px + move_x) % self.game.game_screen_w
+                self.pac_py = (self.pac_py + move_y) % self.game.game_screen_h
+
         else:
-            # not moving: keep pac centered on its grid cell (avoid drift)
-            self.pac_px = self.pac_x * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
-            self.pac_py = self.pac_y * self.game.CELL_SIZE + self.game.CELL_SIZE / 2
+            # Pac-Man ne bouge pas, rester centré
+            self.pac_px = pac_center_x
+            self.pac_py = pac_center_y
 
         # If Pacman is on a pellet, eat it
         if (self.pac_x, self.pac_y) in self.game.pellets:
