@@ -147,7 +147,37 @@ class Game:
         self.door_y = self.height // 2 - 1
         self.bg.blit(self.ghost_door, (self.door_x * self.CELL_SIZE, self.door_y * self.CELL_SIZE))
 
+        if (self.width // 2) % 2 == 1:  # seulement si il y a la colonne de 3 de large
+            self.vertical_streak()
         self.update_pellets_screen()
+    
+
+    # fonctions utilisées pour combler les cercles dans les murs de la colonne centrale
+    def vertical_streak(self):
+        start = None
+        count = 0
+        for i in range(self.height):
+            if not self.cell_free(self.door_x, i):
+                # début d’un nouveau streak
+                if count == 0:
+                    start = i
+                count += 1
+            else:
+                # fin d’un streak
+                if count >= 2:
+                    self.draw_block(start, count)
+                count = 0
+        # gérer un streak qui se termine à la dernière ligne
+        if count >= 2:
+            print(start, count)
+            self.draw_block(start, count)
+
+    def draw_block(self, start, count):
+        start_x = ((self.door_x - 1) * self.CELL_SIZE) + self.CELL_SIZE // 2
+        start_y = (start) * (self.CELL_SIZE) + self.CELL_SIZE // 2
+        rect = pygame.Rect(start_x, start_y, self.CELL_SIZE * 2, (self.CELL_SIZE * count) - self.CELL_SIZE )
+        pygame.draw.rect(self.bg, (0,0,0), rect, width=0)
+
 
 
     # helper to identify ghost-house door cell
