@@ -1,4 +1,5 @@
 import pygame
+from SpriteStripAnim import SpriteStripAnim
 
 class Pacman():
     """ This class represents the player. """
@@ -32,19 +33,27 @@ class Pacman():
         
         self.dist_x = 0
         self.dist_y = 0
+
+        self.strips = []
+        self.n = 0
+
         self.load_sprites()
 
  
     def load_sprites(self):
+        frames = 3
+        self.strips = [
+            SpriteStripAnim('sprites/pacman_sprite_sheet.bmp', (0,0,13,13), 4, -1, True, frames),
+            SpriteStripAnim('sprites/pacman_sprite_sheet.bmp', (0,13,13,13), 4, -1, True, frames),
+            SpriteStripAnim('sprites/pacman_sprite_sheet.bmp', (0,26,13,13), 4, -1, True, frames),
+            SpriteStripAnim('sprites/pacman_sprite_sheet.bmp', (0,39,13,13), 4, -1, True, frames),
+        ]
+        for j in range(len(self.strips)):
+            for i in range(len(self.strips[j].images)):
+                self.strips[j].images[i] = pygame.transform.scale(self.strips[j].images[i], (self.game.CELL_SIZE, self.game.CELL_SIZE))
+
         pacman = pygame.image.load("sprites/pacman_full.png")
         self.pacman_sprite = pygame.transform.scale(pacman, (self.game.CELL_SIZE, self.game.CELL_SIZE))
-        pacman_right = pygame.image.load("sprites/pacman_right.png")
-
-        self.pacman_right = pygame.transform.scale(pacman_right, (self.game.CELL_SIZE, self.game.CELL_SIZE))
-        self.pacman_left = pygame.transform.flip(self.pacman_right, True, False)
-        self.pacman_up = pygame.transform.rotate(self.pacman_right, 90)
-        self.pacman_down = pygame.transform.flip(self.pacman_up, False, True)
-
 
     def eat_pellet(self, type, score, x, y):
         """ Eat a pellet of the given type ('small' or 'big'). """
@@ -101,10 +110,10 @@ class Pacman():
                 if self.game.cell_free(tx, ty) and not self.game.is_ghost_house_door(tx, ty):
                     # On tourne
                     self.current_dir = self.next_dir
-                    self.pacman_sprite = {(0, -1): self.pacman_up,
-                            (0, 1): self.pacman_down,
-                            (-1, 0): self.pacman_left,
-                                (1, 0): self.pacman_right}[self.next_dir]
+                    self.n = {(0, -1): 1,
+                            (0, 1): 3,
+                            (-1, 0): 2,
+                                (1, 0): 0}[self.next_dir]
                 else:
                     # Sinon, essayer de continuer tout droit
                     cx = self.pac_x + self.current_dir[0]
@@ -157,6 +166,7 @@ class Pacman():
                 # Avancer normalement
                 self.pac_px = (self.pac_px + move_x) % self.game.game_screen_w
                 self.pac_py = (self.pac_py + move_y) % self.game.game_screen_h
+                self.pacman_sprite = self.strips[self.n].next()
 
         else:
             # Pac-Man ne bouge pas, rester centré

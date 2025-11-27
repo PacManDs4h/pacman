@@ -26,6 +26,7 @@ class Game:
         self.ghost_door = None
         self.small_pellet = None
         self.big_pellet = None
+        self.lives_sprite = None
 
         self.door_x = 0
         self.door_y = 0
@@ -78,17 +79,25 @@ class Game:
 
 
     def load_map_sprites(self):
-        mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.png')
-        self.mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16)
+        mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.bmp')
+        self.mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16, -1)
         for i in range(len(self.mapImages)):
-            self.mapImages[i] = pygame.transform.scale(self.mapImages[i], (self.CELL_SIZE, self.CELL_SIZE)).convert()
-        ghost_door = mapSpriteSheet.image_at((32, 16, 16, 16))
-        self.ghost_door = pygame.transform.scale(ghost_door, (self.CELL_SIZE, self.CELL_SIZE)).convert()
+            self.mapImages[i] = self.resize_sprites(self.mapImages[i])
+
+        ghost_door = mapSpriteSheet.image_at((32, 16, 16, 16), -1)
+        self.ghost_door = self.resize_sprites(ghost_door)
 
         small_pellet = pygame.image.load("sprites/small_pellet.png")
         big_pellet = pygame.image.load("sprites/big_pellet.png")
-        self.small_pellet = pygame.transform.scale(small_pellet, (self.CELL_SIZE, self.CELL_SIZE)).convert()
-        self.big_pellet = pygame.transform.scale(big_pellet, (self.CELL_SIZE, self.CELL_SIZE)).convert()
+        self.small_pellet = self.resize_sprites(small_pellet)
+        self.big_pellet = self.resize_sprites(big_pellet)
+
+        self.lives_sprite = self.resize_sprites(pygame.image.load("sprites/pacman_left.png"))
+
+
+    def resize_sprites(self, image):
+        image = pygame.transform.scale(image, (self.CELL_SIZE, self.CELL_SIZE)).convert_alpha()
+        return image
 
 
     def generate_pelet(self):
@@ -169,7 +178,6 @@ class Game:
                 count = 0
         # gérer un streak qui se termine à la dernière ligne
         if count >= 2:
-            print(start, count)
             self.draw_block(start, count)
 
     def draw_block(self, start, count):
@@ -260,7 +268,7 @@ class Game:
             for i in range(self.lives - 1):
                 x = self.offset_x + 4 + i * (self.CELL_SIZE + 4)
                 y = self.game_screen_h + self.offset_y + 4
-                self.screen.blit(self.pacman.pacman_left, (x, y))
+                self.screen.blit(self.lives_sprite, (x, y))
 
         if self.win:
             win_surf = self.win_font.render(f"you win !", True, (255, 255, 255))
