@@ -6,35 +6,40 @@ def get_direction(self, pacman):
     self.center_x = self.x * cs + cs / 2
     self.center_y = self.y * cs + cs / 2
 
-    # savoir exactement au centre
-    at_center = abs(self.px - self.center_x) < 0.1 and abs(self.py - self.center_y) < 0.1
-    # si centré : gérer les changements de direction
-    if at_center:
+    at_center_x = abs(self.px - self.center_x) < 0.1
+    at_center_y = abs(self.py - self.center_y) < 0.1
+        
+    if at_center_x or at_center_y:
 
         # réaligner pour éviter les erreurs de flottants
-        self.px = self.center_x
-        self.py = self.center_y
+        if at_center_x:
+            self.px = self.center_x
+        if at_center_y:
+            self.py = self.center_y
 
         # veut tourner ?
-        if self.next_dir != (0, 0):
+        if self.next_dir != self.current_dir:
+            moving_x = self.next_dir[0] != 0
+            moving_y = self.next_dir[1] != 0
             tx = (self.x + self.next_dir[0])
             ty = (self.y + self.next_dir[1])
 
             # peut-on tourner ?
             if self.game.cell_free(tx, ty) and (not pacman or not self.game.is_ghost_house_door(tx, ty)):
-                # on tourne
-                self.current_dir = self.next_dir
-                self.n = {(0, -1): 1,
-                        (0, 1): 3,
-                        (-1, 0): 2,
-                            (1, 0): 0}[self.next_dir]
+                if (moving_x and at_center_y) or (moving_y and at_center_x):
+                    # on tourne
+                    self.current_dir = self.next_dir
+                    self.n = {(0, -1): 1,
+                            (0, 1): 3,
+                            (-1, 0): 2,
+                                (1, 0): 0}[self.next_dir]
 
         cx = self.x + self.current_dir[0]
         cy = self.y + self.current_dir[1]
         if not self.game.cell_free(cx, cy) or (pacman and self.game.is_ghost_house_door(cx, cy)):
             self.current_dir = (0, 0)
 
-def move(self, pacman):
+def move(self):
     """ Function to move used by pacman and ghosts. """
     cs = self.game.CELL_SIZE
     if self.current_dir != (0, 0):
