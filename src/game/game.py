@@ -60,11 +60,16 @@ class Game:
         self.load_map_sprites()
         self.pacman = Pacman.Pacman(self)
         self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2)
+        self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1 , self.height // 2)
+        self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2)
+        self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2)
         self.generate_pelet()
         self.add_walls()
 
         self.offset_x = (self.screen_w // 2) - (self.game_screen_w // 2)
         self.offset_y = (self.screen_h // 2) - (self.game_screen_h // 2)
+
+        self.ghosts_pos = []
 
 
 
@@ -113,7 +118,7 @@ class Game:
                     if x != 0 and x != self.width - 1 and y != 0 and y != self.height - 1:
                         self.pellets.add((x, y))
         # remove pellet at starting position so pacman doesn't immediately eat one here
-        self.pellets.discard((self.pacman.pac_x, self.pacman.pac_y))
+        self.pellets.discard((self.pacman.x, self.pacman.y))
         # remove around ghost house 7 * 5
         for gy in range(self.height // 2 - 3, self.height // 2 + 3):
             for gx in range(self.width // 2 - 3, self.width // 2 + 4):
@@ -225,7 +230,17 @@ class Game:
         if not self.win:
             self.pacman.update()
             self.red_ghost.update()
+            self.blue_ghost.update()
+            self.pink_ghost.update()
+            self.orange_ghost.update()
+            self.ghosts_pos = [(self.red_ghost.x, self.red_ghost.y), (self.blue_ghost.x, self.blue_ghost.y), (self.pink_ghost.x, self.pink_ghost.y), (self.orange_ghost.x, self.orange_ghost.y)]
 
+    def reset(self):
+        self.pacman.reset_position()
+        self.red_ghost.reset_position()
+        self.blue_ghost.reset_position()
+        self.pink_ghost.reset_position()
+        self.orange_ghost.reset_position()
 
     def update_pellets_screen(self):
         self.pellets_screen.blit(self.bg, (0, 0))
@@ -246,11 +261,14 @@ class Game:
         # draw background (walls + floor + door) from cached Surface
         self.game_screen.blit(self.pellets_screen, (0, 0))
 
+     
         # draw pacman
-        center = (int(self.pacman.pac_px) - self.CELL_SIZE // 2, int(self.pacman.pac_py) - self.CELL_SIZE // 2)
-        self.game_screen.blit(self.pacman.pacman_sprite, center)
+        self.game_screen.blit(self.pacman.current_sprite, self.pacman.center)
 
-        self.game_screen.blit(self.red_ghost.ghost_sprite, (int(self.red_ghost.ghost_x * self.CELL_SIZE), int(self.red_ghost.ghost_y * self.CELL_SIZE)))
+        self.game_screen.blit(self.red_ghost.current_sprite, (self.red_ghost.center))
+        self.game_screen.blit(self.blue_ghost.current_sprite, (self.blue_ghost.center))
+        self.game_screen.blit(self.pink_ghost.current_sprite, (self.pink_ghost.center))
+        self.game_screen.blit(self.orange_ghost.current_sprite, (self.orange_ghost.center))
 
         self.screen.blit(self.game_screen, (self.offset_x, self.offset_y))
 
