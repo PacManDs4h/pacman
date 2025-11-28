@@ -28,6 +28,9 @@ class Pacman():
 
         self.center = (0, 0)
 
+        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
+
+
         self.load_sprites()
 
  
@@ -49,17 +52,15 @@ class Pacman():
     def eat_pellet(self, type, score, x, y):
         """ Eat a pellet of the given type ('small' or 'big'). """
         if type == 'small':
-            if (x, y) in self.game.pellets:
-                self.game.pellets.remove((x, y))
+            self.game.small_pellets.remove((x, y))
         elif type == 'big':
-            if (x, y) in self.game.big_pellets:
-                self.game.big_pellets.remove((x, y))
+            self.game.big_pellets.remove((x, y))
         self.game.score += score
         self.game.update_pellets_screen()
 
     def is_on_ghost(self):
         """ Check if Pacman is on a ghost. """
-        if (self.x, self.y) in self.game.ghosts_pos:
+        if self.hitbox.collidelist(self.game.ghosts_pos) != -1:
             self.game.lives -= 1
             if self.game.lives <= 0:
                 self.game.running = False
@@ -74,16 +75,19 @@ class Pacman():
 
 
     def update(self):
+        """ Update the pacman location. """
         move.get_direction(self, True)
         move.move(self)
+        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
+        self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE // 2 , self.game.CELL_SIZE // 2)
 
         # If Pacman is on a pellet, eat it
-        if (self.x, self.y) in self.game.pellets:
+        if (self.x, self.y) in self.game.small_pellets:
             self.eat_pellet('small', 10, self.x, self.y)
         elif (self.x, self.y) in self.game.big_pellets:
             self.eat_pellet('big', 50, self.x, self.y)
 
         self.is_on_ghost()
 
-        if not self.game.pellets and not self.game.big_pellets:
+        if not self.game.small_pellets and not self.game.big_pellets:
             self.game.win = True

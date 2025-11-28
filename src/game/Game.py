@@ -106,7 +106,7 @@ class Game:
 
 
     def generate_pelet(self):
-        self.pellets = set()
+        self.small_pellets = set()
         self.big_pellets = set()
         for y, row in enumerate(self.maze):
             for x, v in enumerate(row):
@@ -116,19 +116,19 @@ class Game:
                     val = 1
                 if val == 0:
                     if x != 0 and x != self.width - 1 and y != 0 and y != self.height - 1:
-                        self.pellets.add((x, y))
+                        self.small_pellets.add((x, y))
         # remove pellet at starting position so pacman doesn't immediately eat one here
-        self.pellets.discard((self.pacman.x, self.pacman.y))
+        self.small_pellets.discard((self.pacman.x, self.pacman.y))
         # remove around ghost house 7 * 5
         for gy in range(self.height // 2 - 3, self.height // 2 + 3):
             for gx in range(self.width // 2 - 3, self.width // 2 + 4):
-                self.pellets.discard((gx, gy))
+                self.small_pellets.discard((gx, gy))
         # place 4 big pellets near corners
         big_pellet_positions = [(1,1), (1,self.height-2), (self.width-2,1), (self.width-2,self.height-2)]
         for pos in big_pellet_positions:
             self.big_pellets.add(pos)
             # remove pellet at big pellet position so pacman doesn't immediately eat one here
-            self.pellets.discard(pos)
+            self.small_pellets.discard(pos)
 
 
     def add_walls(self):
@@ -233,7 +233,7 @@ class Game:
             self.blue_ghost.update()
             self.pink_ghost.update()
             self.orange_ghost.update()
-            self.ghosts_pos = [(self.red_ghost.x, self.red_ghost.y), (self.blue_ghost.x, self.blue_ghost.y), (self.pink_ghost.x, self.pink_ghost.y), (self.orange_ghost.x, self.orange_ghost.y)]
+            self.ghosts_pos = [self.red_ghost.hitbox, self.blue_ghost.hitbox, self.pink_ghost.hitbox, self.orange_ghost.hitbox]
 
     def reset_positions(self):
         self.pacman.reset_position()
@@ -247,7 +247,7 @@ class Game:
         sp = self.small_pellet
         bp = self.big_pellet
         cs = self.CELL_SIZE
-        for (x, y) in self.pellets:
+        for (x, y) in self.small_pellets:
             rect = pygame.Rect(x * cs, y * cs, cs, cs)
             self.pellets_screen.blit(sp, rect)
         for (x, y) in self.big_pellets:

@@ -33,6 +33,8 @@ class Ghost():
 
         self.center = (0, 0)
 
+        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
+
         self.load_sprites()
     
 
@@ -70,3 +72,5 @@ class Ghost():
 
         move.get_direction(self, False)
         move.move(self)
+        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
+        self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE // 2 , self.game.CELL_SIZE // 2)
