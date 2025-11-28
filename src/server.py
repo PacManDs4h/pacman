@@ -1,4 +1,5 @@
-import sys, os, uuid, json
+import sys
+, uuid, json
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, abort
 from pymongo import MongoClient, ASCENDING
@@ -7,10 +8,54 @@ from pymongo import MongoClient, ASCENDING
 # (Dockerfile copie tout sous /app ; ici server.py est dans /app ;
 #  le dossier /app/recursive_backtracking est donc au même niveau)
 sys.path.insert(0, "recursive_backtracking")
+from pymongo import MongoClient, ASCENDING
+from flask import Flask, request, jsonify, abort
+from datetime import datetime, timezone
+import json
+import uuid
+import os
 from maze import Maze
 from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
 
+
+# --- accès à ton code existant ---
+# (Dockerfile copie tout sous /app ; ici server.py est dans /app ;
+#  le dossier /app/recursive_backtracking est donc au même niveau)
+from json_maze import getJson   # retourne une string JSON (cf. ton fichier)
+
 app = Flask(__name__)
+
+# # ===== MongoDB Atlas =====
+# MONGO_URI = os.getenv("MONGODB_URI")
+# if not MONGO_URI:
+#     raise RuntimeError("MONGODB_URI manquant (Render → Environment)")
+
+# mongo = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+# db = mongo.get_default_database()        # DB prise depuis l’URI
+# mazes = db["mazes"]
+# mazes.create_index([("created_at", ASCENDING)])
+
+
+# def now_iso():
+#     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+# ===== Routes “utiles” =====
+
+
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({"status": "Maze API running", "routes": ["/generate", "/maze/<id>", "/healthz"]}), 200
+
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    try:
+        # mongo.admin.command("ping")
+        return "ok", 200
+    except Exception as e:
+        return ("mongo error: " + str(e), 500)
+
+# ===== Génération + stockage =====
 
 # ===== MongoDB Atlas =====
 MONGO_URI = os.getenv("MONGODB_URI")
@@ -44,6 +89,9 @@ def generate():
     # Lis les paramètres (avec tes valeurs par défaut actuelles)
     width  = int(request.args.get("width",  39))
     height = int(request.args.get("height", 19))
+    nbcycle = int(request.args.get("nb_cycles", 10))
+    nb_wrap_tunnels = int(request.args.get("num_tunnels_wrap", 2))
+    nb_center_tunnels = int(request.args.get("num_tunnels_centre", 5))
     # tes 3 paramètres spécifiques au constructeur Maze
     nb_cycles          = int(request.args.get("cycles",        10))
     nb_wrap_tunnels    = int(request.args.get("wrap_tunnels",   2))
@@ -101,5 +149,6 @@ def get_maze(maze_id):
     return jsonify(doc), 200
 
 if __name__ == "__main__":
+    # OK pour Render, sinon préfère gunicorn en prod
     # OK pour Render, sinon préfère gunicorn en prod
     app.run(host="0.0.0.0", port=8080)
