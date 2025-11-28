@@ -1,4 +1,4 @@
-import spritesheet
+import Spritesheet
 
 class SpriteStripAnim(object):
     """sprite strip animator
@@ -20,7 +20,7 @@ class SpriteStripAnim(object):
         the iterator advances to the next image.
         """
         self.filename = filename
-        ss = spritesheet.spritesheet(filename)
+        ss = Spritesheet.Spritesheet(filename)
         self.images = ss.load_strip(rect, count, colorkey)
         self.i = 0
         self.loop = loop

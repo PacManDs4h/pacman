@@ -63,7 +63,7 @@ class Pacman():
             self.game.lives -= 1
             if self.game.lives <= 0:
                 self.game.running = False
-            self.game.reset()
+            self.game.reset_positions()
     
     def reset_position(self):
         """ Reset Pacman's position to the starting location. """

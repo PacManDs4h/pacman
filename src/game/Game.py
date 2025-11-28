@@ -1,7 +1,7 @@
 import json
 from urllib.request import urlopen
 import pygame
-import spritesheet
+import Spritesheet
 import Pacman
 import Ghost
 
@@ -84,7 +84,7 @@ class Game:
 
 
     def load_map_sprites(self):
-        mapSpriteSheet = spritesheet.spritesheet('sprites/map_spriteSheet.bmp')
+        mapSpriteSheet = Spritesheet.Spritesheet('sprites/map_spriteSheet.bmp')
         self.mapImages = mapSpriteSheet.load_strip((0, 0, 16, 16), 16, -1)
         for i in range(len(self.mapImages)):
             self.mapImages[i] = self.resize_sprites(self.mapImages[i])
@@ -235,7 +235,7 @@ class Game:
             self.orange_ghost.update()
             self.ghosts_pos = [(self.red_ghost.x, self.red_ghost.y), (self.blue_ghost.x, self.blue_ghost.y), (self.pink_ghost.x, self.pink_ghost.y), (self.orange_ghost.x, self.orange_ghost.y)]
 
-    def reset(self):
+    def reset_positions(self):
         self.pacman.reset_position()
         self.red_ghost.reset_position()
         self.blue_ghost.reset_position()
