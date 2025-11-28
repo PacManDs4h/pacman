@@ -47,7 +47,8 @@ def index():
     return jsonify({
         "status": "Maze API running", 
         "db_connected": mazes_collection is not None,
-        "routes": ["/generate", "/maze/<id>", "/maze/<id>/rate"]
+        "routes": ["/generate", "/maze/<id>", "/maze/<id>/rate"],
+        "URI": MONGO_URI
     }), 200
 
 @app.route("/healthz", methods=["GET"])
