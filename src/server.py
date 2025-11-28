@@ -30,7 +30,7 @@ else:
         client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         
         # Récupération de la base par défaut (celle indiquée dans l'URI)
-        db = client.get_default_database()
+        db = client["pacman_db"]
         
         # Collection 'mazes'
         mazes_collection = db["mazes"]
