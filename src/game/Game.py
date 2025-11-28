@@ -233,7 +233,7 @@ class Game:
             self.blue_ghost.update()
             self.pink_ghost.update()
             self.orange_ghost.update()
-            self.ghosts_pos = [self.red_ghost.hitbox, self.blue_ghost.hitbox, self.pink_ghost.hitbox, self.orange_ghost.hitbox]
+            self.ghosts_pos = [self.red_ghost.center, self.blue_ghost.center, self.pink_ghost.center, self.orange_ghost.center]
 
     def reset_positions(self):
         self.pacman.reset_position()
@@ -263,12 +263,12 @@ class Game:
 
      
         # draw pacman
-        self.game_screen.blit(self.pacman.current_sprite, self.pacman.center)
+        self.game_screen.blit(self.pacman.current_sprite, self.pacman.top_left)
 
-        self.game_screen.blit(self.red_ghost.current_sprite, (self.red_ghost.center))
-        self.game_screen.blit(self.blue_ghost.current_sprite, (self.blue_ghost.center))
-        self.game_screen.blit(self.pink_ghost.current_sprite, (self.pink_ghost.center))
-        self.game_screen.blit(self.orange_ghost.current_sprite, (self.orange_ghost.center))
+        self.game_screen.blit(self.red_ghost.current_sprite, self.red_ghost.top_left)
+        self.game_screen.blit(self.blue_ghost.current_sprite, self.blue_ghost.top_left)
+        self.game_screen.blit(self.pink_ghost.current_sprite, self.pink_ghost.top_left)
+        self.game_screen.blit(self.orange_ghost.current_sprite, self.orange_ghost.top_left)
 
         self.screen.blit(self.game_screen, (self.offset_x, self.offset_y))
 

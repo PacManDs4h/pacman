@@ -12,7 +12,7 @@ class Ghost():
         self.start_x = start_x
         self.start_y = start_y
 
-        self.MOVE_SPEED_CELLS_PER_SEC = 6.5
+        self.MOVE_SPEED_CELLS_PER_SEC = 4.5
         
         self.x = start_x
         self.y = start_y
@@ -31,9 +31,8 @@ class Ghost():
         self.strips = []
         self.n = 0
 
+        self.top_left = (0, 0)
         self.center = (0, 0)
-
-        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
 
         self.load_sprites()
     
@@ -72,5 +71,3 @@ class Ghost():
 
         move.get_direction(self, False)
         move.move(self)
-        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
-        self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE // 2 , self.game.CELL_SIZE // 2)

@@ -7,7 +7,7 @@ class Pacman():
     def __init__(self, game):
         self.game = game
         
-        self.MOVE_SPEED_CELLS_PER_SEC = 7.0
+        self.MOVE_SPEED_CELLS_PER_SEC = 5.0
         self.x, self.y = (game.width // 2 - 2, game.height - 2)
 
         # pixel position of Pacman's center (floats for smooth movement)
@@ -26,9 +26,10 @@ class Pacman():
         self.strips = []
         self.n = 0
 
+        self.top_left = (0, 0)
         self.center = (0, 0)
 
-        self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
+        self.hitbox = pygame.Rect(self.center[0], self.center[1], 0, 0)
 
 
         self.load_sprites()
@@ -60,11 +61,12 @@ class Pacman():
 
     def is_on_ghost(self):
         """ Check if Pacman is on a ghost. """
-        if self.hitbox.collidelist(self.game.ghosts_pos) != -1:
-            self.game.lives -= 1
-            if self.game.lives <= 0:
-                self.game.running = False
-            self.game.reset_positions()
+        for ghost in self.game.ghosts_pos:
+            if self.hitbox.collidepoint(ghost):
+                self.game.lives -= 1
+                if self.game.lives <= 0:
+                    self.game.running = False
+                self.game.reset_positions()
     
     def reset_position(self):
         """ Reset Pacman's position to the starting location. """
@@ -79,13 +81,17 @@ class Pacman():
         move.get_direction(self, True)
         move.move(self)
         self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
-        self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE // 2 , self.game.CELL_SIZE // 2)
+        self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE, self.game.CELL_SIZE)
 
         # If Pacman is on a pellet, eat it
-        if (self.x, self.y) in self.game.small_pellets:
-            self.eat_pellet('small', 10, self.x, self.y)
-        elif (self.x, self.y) in self.game.big_pellets:
-            self.eat_pellet('big', 50, self.x, self.y)
+        for pellet in self.game.small_pellets | self.game.big_pellets:
+            if self.hitbox.collidepoint(pellet[0] * self.game.CELL_SIZE + self.game.CELL_SIZE // 2, pellet[1] * self.game.CELL_SIZE + self.game.CELL_SIZE // 2):
+                if pellet in self.game.small_pellets:
+                    self.eat_pellet('small', 10, pellet[0], pellet[1])
+                else:
+                    self.eat_pellet('big', 50, pellet[0], pellet[1])
+                break  # Exit loop after eating a pellet
+
 
         self.is_on_ghost()
 

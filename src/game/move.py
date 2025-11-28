@@ -85,4 +85,5 @@ def move(self):
         self.px = self.center_x
         self.py = self.center_y
     
-    self.center = self.px - cs // 2, self.py - cs // 2
+    self.top_left = self.px - cs // 2, self.py - cs // 2
+    self.center = (self.px, self.py)
