@@ -37,7 +37,7 @@ class Ghost():
     
 
     def load_sprites(self):
-        frames = 8
+        frames = 12
         color = str(self.color)
         
         self.strips = [
@@ -66,7 +66,7 @@ class Ghost():
         # can't be oposite of current direction
         self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
         if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
-            self.next_dir = self.current_dir        
+            self.next_dir = self.current_dir
 
         move.get_direction(self, False)
-        move.move(self, False)
+        move.move(self)

@@ -75,7 +75,7 @@ class Pacman():
 
     def update(self):
         move.get_direction(self, True)
-        move.move(self, True)
+        move.move(self)
 
         # If Pacman is on a pellet, eat it
         if (self.x, self.y) in self.game.pellets:
