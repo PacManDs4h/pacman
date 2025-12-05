@@ -62,6 +62,10 @@ class Ghost():
         self.current_dir = (0, 0)
         self.next_dir = (0, 0)
 
+    def scared(self):
+        self.MOVE_SPEED_CELLS_PER_SEC = 2.5
+        # todo change sprites
+
     def update(self):
         """ Update the ghost location. """
         # can't be oposite of current direction

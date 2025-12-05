@@ -41,9 +41,12 @@ class Game:
         self.score_surf = None
         self.win = False
         self.running = True
+        self.quit = False
 
         self.bg = None
         self.pellets_screen = pygame.Surface((self.screen_w, self.screen_h))
+        
+        self.powered_up = False
 
 
         self.generate_maze()
@@ -63,6 +66,9 @@ class Game:
         self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1 , self.height // 2)
         self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2)
         self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2)
+
+        self.ghosts = [self.red_ghost, self.blue_ghost, self.pink_ghost, self.orange_ghost]
+
         self.generate_pelet()
         self.add_walls()
 
@@ -71,6 +77,14 @@ class Game:
 
         self.ghosts_pos = []
 
+        with open("save.txt") as f:
+            self.save = f.read()
+
+        self.save = [e+")" for e in self.save.split(")") if e]
+        self.i = 0
+        # self.save = self.save.split("")
+
+        # print(self.save)
 
 
     # --- Maze generation via web API ---
@@ -185,6 +199,7 @@ class Game:
         if count >= 2:
             self.draw_block(start, count)
 
+
     def draw_block(self, start, count):
         start_x = ((self.door_x - 1) * self.CELL_SIZE) + self.CELL_SIZE // 2
         start_y = (start) * (self.CELL_SIZE) + self.CELL_SIZE // 2
@@ -209,11 +224,32 @@ class Game:
         elif d < -wrap / 2:
             d += wrap
         return d
+    
+    def power_up(self):
+        self.powered_up = True
+        for ghost in self.ghosts:
+            ghost.scared()
+
+
+    def test_load(self):
+        if self.i < len(self.save):
+            self.pacman.next_dir = eval(self.save[self.i])
+            self.i += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.quit = True
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    self.running = False
+        return self.running
+
 
     def process_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
+                self.quit = True
+                self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     self.pacman.next_dir = (0, -1)
@@ -231,18 +267,14 @@ class Game:
     def run_logic(self):
         if not self.win:
             self.pacman.update()
-            self.red_ghost.update()
-            self.blue_ghost.update()
-            self.pink_ghost.update()
-            self.orange_ghost.update()
-            self.ghosts_pos = [self.red_ghost.center, self.blue_ghost.center, self.pink_ghost.center, self.orange_ghost.center]
+            for ghost in self.ghosts:
+                ghost.update()
+            self.ghosts_pos = [[self.red_ghost, self.red_ghost.center], [self.blue_ghost, self.blue_ghost.center], [self.pink_ghost, self.pink_ghost.center], [self.orange_ghost, self.orange_ghost.center]]
 
     def reset_positions(self):
         self.pacman.reset_position()
-        self.red_ghost.reset_position()
-        self.blue_ghost.reset_position()
-        self.pink_ghost.reset_position()
-        self.orange_ghost.reset_position()
+        for ghost in self.ghosts:
+            ghost.reset_position()
 
     def update_pellets_screen(self):
         self.pellets_screen.blit(self.bg, (0, 0))
@@ -262,15 +294,12 @@ class Game:
         self.screen.fill((0, 0, 0))
         # draw background (walls + floor + door) from cached Surface
         self.game_screen.blit(self.pellets_screen, (0, 0))
-
      
         # draw pacman
         self.game_screen.blit(self.pacman.current_sprite, self.pacman.top_left)
 
-        self.game_screen.blit(self.red_ghost.current_sprite, self.red_ghost.top_left)
-        self.game_screen.blit(self.blue_ghost.current_sprite, self.blue_ghost.top_left)
-        self.game_screen.blit(self.pink_ghost.current_sprite, self.pink_ghost.top_left)
-        self.game_screen.blit(self.orange_ghost.current_sprite, self.orange_ghost.top_left)
+        for ghost in self.ghosts:
+            self.game_screen.blit(ghost.current_sprite, ghost.top_left)
 
         self.screen.blit(self.game_screen, (self.offset_x, self.offset_y))
 

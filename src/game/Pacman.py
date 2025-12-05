@@ -31,6 +31,8 @@ class Pacman():
 
         self.hitbox = pygame.Rect(self.center[0], self.center[1], 0, 0)
 
+        self.save = ""
+
 
         self.load_sprites()
 
@@ -62,11 +64,15 @@ class Pacman():
     def is_on_ghost(self):
         """ Check if Pacman is on a ghost. """
         for ghost in self.game.ghosts_pos:
-            if self.hitbox.collidepoint(ghost):
-                self.game.lives -= 1
-                if self.game.lives <= 0:
-                    self.game.running = False
-                self.game.reset_positions()
+            if self.hitbox.collidepoint(ghost[1]):
+
+                if self.game.powered_up:
+                    ghost[0].reset_position()
+                else:
+                    self.game.lives -= 1
+                    if self.game.lives <= 0:
+                        self.game.running = False
+                    self.game.reset_positions()
     
     def reset_position(self):
         """ Reset Pacman's position to the starting location. """
@@ -80,6 +86,7 @@ class Pacman():
         """ Update the pacman location. """
         move.get_direction(self, True)
         move.move(self)
+        self.save += str(self.current_dir)
         self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
         self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE, self.game.CELL_SIZE)
 
@@ -90,6 +97,8 @@ class Pacman():
                     self.eat_pellet('small', 10, pellet[0], pellet[1])
                 else:
                     self.eat_pellet('big', 50, pellet[0], pellet[1])
+                    # self.game.powered_up = True
+                    self.game.power_up()
                 break  # Exit loop after eating a pellet
 
 

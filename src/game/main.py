@@ -28,15 +28,21 @@ def game():
         game.dt = clock.tick(60) / 1000.0
 
         # Process events (keystrokes, mouse clicks, etc)
-        running = game.process_events()
+        # running = game.process_events()
+        running = game.test_load()
 
         # Update object positions, check for collisions
         game.run_logic()
  
         # Draw the current frame
         game.display_frame()
- 
-    main_menu()
+
+    with open("save.txt", "w") as f:
+        f.write(game.pacman.save)
+    if game.quit:
+        pygame.quit()
+    else:
+        main_menu()
 
 
 def maps():
@@ -64,6 +70,7 @@ def maps():
         main_menu()
 
     pygame.quit()
+
 
 def main_menu():
     running = True
