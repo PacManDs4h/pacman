@@ -213,7 +213,7 @@ class Game:
     def process_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.running = False
+                pygame.quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     self.pacman.next_dir = (0, -1)
@@ -223,6 +223,8 @@ class Game:
                     self.pacman.next_dir = (-1, 0)
                 elif event.key == pygame.K_RIGHT:
                     self.pacman.next_dir = (1, 0)
+                elif event.key == pygame.K_BACKSPACE:
+                    self.running = False
         return self.running
 
 

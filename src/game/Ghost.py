@@ -69,5 +69,25 @@ class Ghost():
         if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
             self.next_dir = self.current_dir
 
-        move.get_direction(self, False)
+        in_house = False
+
+        if self.color == "red":
+            pass
+            # go towards pacman
+        
+        elif self.color == "blue":
+            if self.game.score >= 300:
+                in_house = False
+            else:
+                in_house = True
+            
+        elif self.color == "orange":
+            if self.game.score >= 600:
+                in_house = False
+            else:
+                in_house = True
+
+
+
+        move.get_direction(self, in_house)
         move.move(self)
