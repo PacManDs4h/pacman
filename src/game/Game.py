@@ -234,7 +234,12 @@ class Game:
         self.powered_up = True
         if not self.type == "record":
             for ghost in self.ghosts:
-                ghost.scared()
+                ghost.chase = False
+    def power_up_ended(self):
+        self.powered_up = False
+        if not self.type == "record":
+            for ghost in self.ghosts:
+                ghost.chase = True
 
 
     def process_save(self):

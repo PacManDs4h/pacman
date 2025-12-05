@@ -1,3 +1,5 @@
+import json
+from urllib.request import urlopen
 import Game
 import pygame
 import Button
@@ -120,14 +122,32 @@ def play():
 def maps():
     running = True
     font = pygame.font.Font("fonts/emulogic.ttf", 40)
-    final = font.render("Map list", True, (255, 255, 255))
+    map = font.render("Map list", True, (255, 255, 255))
+    loading = font.render("Loading...", True, (255, 255, 255))
 
     action = 0
-    
+    screen.fill((0, 0, 0))
+    screen.blit(map,(SCREEN_WIDTH // 2 - map.get_width() // 2, 20))
+    screen.blit(loading,(SCREEN_WIDTH // 2 - loading.get_width() // 2, 350))
+    pygame.display.flip()
+
+    url = f"https://pacmaz-s1-o.onrender.com/mazes"
+    response = urlopen(url)
+    data_json = json.loads(response.read())
+    mazes = data_json["mazes"]
+
+    buttons = []
+
+    for i in range(5):
+        buttons.append(Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3 + 60 * i), mazes[i]["id"], (255, 255, 255), 30))
+
     while running:
         clock.tick(60)
         screen.fill((0, 0, 0))
-        screen.blit(final,(SCREEN_WIDTH // 2 - final.get_width() // 2, 20))
+        screen.blit(map,(SCREEN_WIDTH // 2 - map.get_width() // 2, 20))
+
+        for button in buttons:
+            screen.blit(button.final,(button.x_pos, button.y_pos))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
