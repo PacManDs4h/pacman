@@ -86,7 +86,6 @@ class Pacman():
         """ Update the pacman location. """
         move.get_direction(self, True)
         move.move(self)
-        self.save += str(self.current_dir)
         self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
         self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE, self.game.CELL_SIZE)
 
@@ -101,8 +100,10 @@ class Pacman():
                     self.game.power_up()
                 break  # Exit loop after eating a pellet
 
-
-        self.is_on_ghost()
+        if not self.game.type == "record":
+            self.is_on_ghost()
+        else:
+            self.save += str(self.next_dir)
 
         if not self.game.small_pellets and not self.game.big_pellets:
             self.game.win = True

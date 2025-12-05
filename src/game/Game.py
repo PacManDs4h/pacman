@@ -6,7 +6,7 @@ import Pacman
 import Ghost
 
 class Game:
-    def __init__(self, screen):
+    def __init__(self, screen, type = "normal"):
         self.MAZE_WIDTH = 19
         self.MAZE_HEIGHT = 21 
         self.MAZE_NB_CYCLES = 10
@@ -17,6 +17,8 @@ class Game:
 
         self.score = 0
         self.lives = 3
+
+        self.type = type
 
         self.screen = screen
         self.screen_w = screen.get_width()
@@ -48,6 +50,13 @@ class Game:
         
         self.powered_up = False
 
+        
+        with open("save.txt") as f:
+            self.save = f.read()
+        self.save = self.save.split("#", 1)
+        self.id = self.save[0]
+        self.save = [e+")" for e in self.save[1].split(")") if e]
+        self.i = 0
 
         self.generate_maze()
 
@@ -62,12 +71,15 @@ class Game:
 
         self.load_map_sprites()
         self.pacman = Pacman.Pacman(self)
-        self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2)
-        self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1 , self.height // 2)
-        self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2)
-        self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2)
 
-        self.ghosts = [self.red_ghost, self.blue_ghost, self.pink_ghost, self.orange_ghost]
+        if not type == "record":
+            self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2)
+            self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1 , self.height // 2)
+            self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2)
+            self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2)
+
+            self.ghosts = [self.red_ghost, self.blue_ghost, self.pink_ghost, self.orange_ghost]
+            self.ghosts_pos = []
 
         self.generate_pelet()
         self.add_walls()
@@ -75,26 +87,19 @@ class Game:
         self.offset_x = (self.screen_w // 2) - (self.game_screen_w // 2)
         self.offset_y = (self.screen_h // 2) - (self.game_screen_h // 2)
 
-        self.ghosts_pos = []
-
-        with open("save.txt") as f:
-            self.save = f.read()
-
-        self.save = [e+")" for e in self.save.split(")") if e]
-        self.i = 0
-        # self.save = self.save.split("")
-
-        # print(self.save)
-
-
+        
     # --- Maze generation via web API ---
     def generate_maze(self):
-        url = f"https://pacmaz-s1-o.onrender.com/generate?width={self.MAZE_WIDTH}&height={self.MAZE_HEIGHT}&nbcycle={self.MAZE_NB_CYCLES}&nb_wrap_tunnels={self.MAZE_NUM_WRAP_TUNNELS}&nb_center_tunnels={self.MAZE_NUM_CENTER_TUNNELS}"
+        if self.type == "play_save":
+            url = f"https://pacmaz-s1-o.onrender.com/maze/{self.id}"
+        else:
+            url = f"https://pacmaz-s1-o.onrender.com/generate?width={self.MAZE_WIDTH}&height={self.MAZE_HEIGHT}&nbcycle={self.MAZE_NB_CYCLES}&nb_wrap_tunnels={self.MAZE_NUM_WRAP_TUNNELS}&nb_center_tunnels={self.MAZE_NUM_CENTER_TUNNELS}"
         response = urlopen(url)
         data_json = json.loads(response.read())
         self.maze = data_json.get("maze")
         self.height = data_json.get("height")
         self.width = data_json.get("width")
+        self.id = data_json.get("id")
 
 
     def load_map_sprites(self):
@@ -227,11 +232,12 @@ class Game:
     
     def power_up(self):
         self.powered_up = True
-        for ghost in self.ghosts:
-            ghost.scared()
+        if not self.type == "record":
+            for ghost in self.ghosts:
+                ghost.scared()
 
 
-    def test_load(self):
+    def process_save(self):
         if self.i < len(self.save):
             self.pacman.next_dir = eval(self.save[self.i])
             self.i += 1
@@ -267,14 +273,16 @@ class Game:
     def run_logic(self):
         if not self.win:
             self.pacman.update()
-            for ghost in self.ghosts:
-                ghost.update()
-            self.ghosts_pos = [[self.red_ghost, self.red_ghost.center], [self.blue_ghost, self.blue_ghost.center], [self.pink_ghost, self.pink_ghost.center], [self.orange_ghost, self.orange_ghost.center]]
+            if not self.type == "record":
+                for ghost in self.ghosts:
+                    ghost.update()
+                self.ghosts_pos = [[self.red_ghost, self.red_ghost.center], [self.blue_ghost, self.blue_ghost.center], [self.pink_ghost, self.pink_ghost.center], [self.orange_ghost, self.orange_ghost.center]]
 
     def reset_positions(self):
         self.pacman.reset_position()
-        for ghost in self.ghosts:
-            ghost.reset_position()
+        if not self.type == "record":
+            for ghost in self.ghosts:
+                ghost.reset_position()
 
     def update_pellets_screen(self):
         self.pellets_screen.blit(self.bg, (0, 0))
@@ -298,8 +306,9 @@ class Game:
         # draw pacman
         self.game_screen.blit(self.pacman.current_sprite, self.pacman.top_left)
 
-        for ghost in self.ghosts:
-            self.game_screen.blit(ghost.current_sprite, ghost.top_left)
+        if not self.type == "record":
+            for ghost in self.ghosts:
+                self.game_screen.blit(ghost.current_sprite, ghost.top_left)
 
         self.screen.blit(self.game_screen, (self.offset_x, self.offset_y))
 
