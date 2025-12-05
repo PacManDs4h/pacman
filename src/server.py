@@ -4,11 +4,10 @@ import json
 import uuid
 from datetime import datetime, timezone
 
-# Ajout du chemin pour les modules internes
 sys.path.insert(0, "recursive_backtracking")
 
 from flask import Flask, request, jsonify, abort
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING
 from bson.objectid import ObjectId
 
 from maze import Maze
@@ -17,7 +16,6 @@ from json_maze import getJson
 app = Flask(__name__)
 
 # ===== 1. Configuration MongoDB =====
-# On récupère l'URI depuis les variables d'environnement (Render ou Docker)
 MONGO_URI = os.getenv("MONGODB_URI")
 
 mazes_collection = None
@@ -47,7 +45,7 @@ def index():
     return jsonify({
         "status": "Maze API running", 
         "db_connected": mazes_collection is not None,
-        "routes": ["/generate", "/maze/<id>", "/maze/<id>/rate"]
+        "routes": ["/generate", "/mazes", "/maze/<id>", "/maze/<id>/rate"]
     }), 200
 
 @app.route("/healthz", methods=["GET"])
@@ -99,8 +97,10 @@ def generate():
 
     return jsonify(maze_data)
 
-# ===== 3. Lecture d'un labyrinthe par ID =====
 
+
+
+# ===== 3. Lecture d'un labyrinthe par ID =====
 @app.route("/maze/<maze_id>", methods=["GET"])
 def get_maze(maze_id):
     if mazes_collection is None:
@@ -125,14 +125,40 @@ def get_maze(maze_id):
 
     return jsonify(response_data), 200
 
+
+# ===== 3b. Liste de tous les labyrinthes =====
+@app.route("/mazes", methods=["GET"])
+def list_mazes():
+
+    if mazes_collection is None:
+        return abort(503, description="Database not connected")
+
+    limit = int(request.args.get("limit", 20))
+    page = int(request.args.get("page", 1))
+    skip = (page - 1) * limit
+
+    cursor = mazes_collection.find({}, {"data": 0}).sort("_id", DESCENDING).skip(skip).limit(limit)
+
+    mazes = []
+    for doc in cursor:
+        created = doc["created_at"]
+        if hasattr(created, "isoformat"):
+            created = created.isoformat()
+
+        mazes.append({
+            "id": str(doc["_id"]),
+            "created_at": created,
+            "params": doc["params"],
+            "user_note": doc.get("note")
+        })
+
+    return jsonify({"count": len(mazes), "page": page, "mazes": mazes}), 200
+
 # ===== 4. Notation d'un labyrinthe =====
 
 @app.route("/maze/<maze_id>/rate", methods=["POST"])
 def rate_maze(maze_id):
-    """
-    Attend un JSON : {"note": 5}
-    Met à jour le champ 'note' du document en base.
-    """
+
     if mazes_collection is None:
         return abort(503, description="Database not connected")
 
