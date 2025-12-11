@@ -64,12 +64,31 @@ class Ghost():
         self.current_dir = (0, 0)
         self.next_dir = (0, 0)
 
-    def update(self):
-        """ Update the ghost location. """
-        # can't be oposite of current direction
-        self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
-        if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
-            self.next_dir = self.current_dir
+    def mouv_ghost(self):
+        start_pos = (int(self.x), int(self.y))
+        
+        pacman_pos = (int(self.game.pacman.x), int(self.game.pacman.y))
+        
+        path = self.game.get_path_bfs(start_pos, pacman_pos)
+        
+        if path:
+            # La prochaine case où aller est la première du chemin
+            next_cell = path[0] 
+            nx, ny = next_cell
+            
+            dx = nx - start_pos[0]
+            dy = ny - start_pos[1]
+            self.next_dir = (dx, dy)
+        else:
+            # Si pas de chemin trouvé, mouvement aléatoire
+            self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
+            if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
+                self.next_dir = self.current_dir
+
+        if self.chase == True:
+            self.MOVE_SPEED_CELLS_PER_SEC = 4.
+        else:
+            self.MOVE_SPEED_CELLS_PER_SEC = 2.5
 
         in_house = False
 
@@ -89,12 +108,14 @@ class Ghost():
             else:
                 in_house = True
 
-        if self.chase == True:
-            self.MOVE_SPEED_CELLS_PER_SEC = 4.
-        else:
-            self.MOVE_SPEED_CELLS_PER_SEC = 2.5
-
-
-
         move.get_direction(self, in_house)
         move.move(self)
+
+    def update(self):
+        """ Update the ghost location. """
+        self.mouv_ghost()
+
+
+
+
+
