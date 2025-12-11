@@ -2,6 +2,7 @@ import pygame
 from SpriteStripAnim import SpriteStripAnim
 import move
 import random
+import math
 
 class Ghost():
     """ This class represents a ghost. """
@@ -64,12 +65,68 @@ class Ghost():
         self.current_dir = (0, 0)
         self.next_dir = (0, 0)
 
+    def get_target(self):
+        """ Définit la case cible selon la personnalité du fantôme """
+        
+        # On récupère les infos de Pacman
+        pacman = self.game.pacman
+        px, py = int(pacman.x), int(pacman.y)
+        
+        # On essaie de récupérer la direction de Pacman (sinon par défaut (0,0))
+        p_dir_x, p_dir_y = getattr(pacman, 'next_dir', (0, 0)) 
+
+        # --- 1. BLINKY (Rouge) : Chasse directe ---
+        if self.color == "red":
+            return (px, py)
+
+        # --- 2. PINKY (Rose) : Vise 4 cases devant ---
+        elif self.color == "pink":
+            target_x = px + (p_dir_x * 4)
+            target_y = py + (p_dir_y * 4)
+            return (int(target_x), int(target_y))
+
+        # --- 3. INKY (Bleu) : Tenaille (Symétrie par rapport à Blinky) ---
+        elif self.color == "blue":
+            # Il a besoin de la position de Blinky (Red)
+            if hasattr(self.game, 'red_ghost'):
+                red = self.game.red_ghost
+                rx, ry = int(red.x), int(red.y)
+                
+                # Point pivot : 2 cases devant Pacman
+                pivot_x = px + (p_dir_x * 2)
+                pivot_y = py + (p_dir_y * 2)
+                
+                # Vecteur Blinky -> Pivot
+                vec_x = pivot_x - rx
+                vec_y = pivot_y - ry
+                
+                # Cible = Pivot + Vecteur (Double la distance)
+                return (int(pivot_x + vec_x), int(pivot_y + vec_y))
+            else:
+                return (px, py) # Fallback sur comportement rouge
+
+        # --- 4. CLYDE (Orange) : Chasseur timide ---
+        elif self.color == "orange":
+            # Calcul de la distance avec Pacman (Euclidienne)
+            gx, gy = int(self.x), int(self.y)
+            distance = math.sqrt((gx - px)**2 + (gy - py)**2)
+            
+            if distance > 8:
+                # Si loin : il chasse
+                return (px, py)
+            else:
+                # Si trop près : il fuit vers son coin (ex: 0, Hauteur max)
+                return (0, self.game.height - 1)
+
+        # Par défaut (si autre couleur)
+        return (px, py)
+
     def mouv_ghost(self):
         start_pos = (int(self.x), int(self.y))
         
-        pacman_pos = (int(self.game.pacman.x), int(self.game.pacman.y))
+        target_pos = self.get_target()
         
-        path = self.game.get_path_bfs(start_pos, pacman_pos)
+        path = self.game.get_path_bfs(start_pos, target_pos)
         
         if path:
             # La prochaine case où aller est la première du chemin
