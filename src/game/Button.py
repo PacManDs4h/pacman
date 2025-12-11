@@ -7,7 +7,7 @@ class Button():
         self.font = pygame.font.Font("fonts/emulogic.ttf", size)
         self.final = self.font.render(self.text, True, color)
         self.width = self.final.get_width() + 10
-        self.height = self.final.get_height()
+        self.height = self.final.get_height() + 10
         self.x_pos = pos[0] - self.width // 2
         self.y_pos = pos[1] - self.height // 2
 

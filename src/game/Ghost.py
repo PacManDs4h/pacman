@@ -34,6 +34,8 @@ class Ghost():
         self.top_left = (0, 0)
         self.center = (0, 0)
 
+        self.chase = True
+
         self.load_sprites()
     
 
@@ -62,10 +64,6 @@ class Ghost():
         self.current_dir = (0, 0)
         self.next_dir = (0, 0)
 
-    def scared(self):
-        self.MOVE_SPEED_CELLS_PER_SEC = 2.5
-        # todo change sprites
-
     def update(self):
         """ Update the ghost location. """
         # can't be oposite of current direction
@@ -90,6 +88,11 @@ class Ghost():
                 in_house = False
             else:
                 in_house = True
+
+        if self.chase == True:
+            self.MOVE_SPEED_CELLS_PER_SEC = 4.
+        else:
+            self.MOVE_SPEED_CELLS_PER_SEC = 2.5
 
 
 

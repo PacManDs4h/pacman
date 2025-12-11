@@ -33,6 +33,8 @@ class Pacman():
 
         self.save = ""
 
+        self.power_start_time = 0
+
 
         self.load_sprites()
 
@@ -86,7 +88,6 @@ class Pacman():
         """ Update the pacman location. """
         move.get_direction(self, True)
         move.move(self)
-        self.save += str(self.current_dir)
         self.hitbox = pygame.Rect(self.px, self.py, 0, 0)
         self.hitbox = self.hitbox.inflate(self.game.CELL_SIZE, self.game.CELL_SIZE)
 
@@ -99,10 +100,16 @@ class Pacman():
                     self.eat_pellet('big', 50, pellet[0], pellet[1])
                     # self.game.powered_up = True
                     self.game.power_up()
+                    self.power_start_time = pygame.time.get_ticks()
                 break  # Exit loop after eating a pellet
 
-
-        self.is_on_ghost()
+        if not self.game.type == "record":
+            self.is_on_ghost()
+        else:
+            self.save += str(self.next_dir)
+        
+        if self.power_start_time + 10000 < pygame.time.get_ticks():
+            self.game.power_up_ended()
 
         if not self.game.small_pellets and not self.game.big_pellets:
             self.game.win = True
