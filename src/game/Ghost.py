@@ -6,7 +6,7 @@ import math
 
 class Ghost():
     """ This class represents a ghost. """
-    def __init__(self, game, color, start_x, start_y):
+    def __init__(self, game, color, start_x, start_y, ia_type="blinky"):
         self.game = game
         self.color = color
 
@@ -36,6 +36,7 @@ class Ghost():
         self.center = (0, 0)
 
         self.chase = True
+        self.ia_type = ia_type
 
         self.load_sprites()
     
@@ -75,18 +76,22 @@ class Ghost():
         # On essaie de récupérer la direction de Pacman (sinon par défaut (0,0))
         p_dir_x, p_dir_y = getattr(pacman, 'next_dir', (0, 0)) 
 
-        # --- 1. BLINKY (Rouge) : Chasse directe ---
-        if self.color == "red":
+        # IA Random
+        if self.ia_type == "random":
+            return None
+
+        # IA Blinky (Chasseur directe)
+        if self.ia_type == "blinky":
             return (px, py)
 
-        # --- 2. PINKY (Rose) : Vise 4 cases devant ---
-        elif self.color == "pink":
+        # IA Pinky (Vise 4 cases devant)
+        elif self.ia_type == "pinky":
             target_x = px + (p_dir_x * 4)
             target_y = py + (p_dir_y * 4)
             return (int(target_x), int(target_y))
 
-        # --- 3. INKY (Bleu) : Tenaille (Symétrie par rapport à Blinky) ---
-        elif self.color == "blue":
+        # IA Inky (Symétrie par rapport à Blinky)
+        elif self.ia_type == "inky":
             # Il a besoin de la position de Blinky (Red)
             if hasattr(self.game, 'red_ghost'):
                 red = self.game.red_ghost
@@ -105,8 +110,8 @@ class Ghost():
             else:
                 return (px, py) # Fallback sur comportement rouge
 
-        # --- 4. CLYDE (Orange) : Chasseur timide ---
-        elif self.color == "orange":
+        # IA Clyde (retourne au coin gauche quand se rapproche de Pacman
+        elif self.ia_type == "clyde":
             # Calcul de la distance avec Pacman (Euclidienne)
             gx, gy = int(self.x), int(self.y)
             distance = math.sqrt((gx - px)**2 + (gy - py)**2)
@@ -123,6 +128,14 @@ class Ghost():
 
     def mouv_ghost(self):
         start_pos = (int(self.x), int(self.y))
+
+        if self.ia_type == "random":
+            self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
+            if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
+                self.next_dir = self.current_dir
+            move.get_direction(self, True) # True = Random allowed inside move logic if implemented
+            move.move(self)
+            return
         
         target_pos = self.get_target()
         
