@@ -1,2 +1,3 @@
 __pycache__
 src/game/save.txt
+src/.venv/*
