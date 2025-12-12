@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import Game
 import pygame
 import Button
+import Map
 import threading
 from urllib.request import Request, urlopen
 import urllib.error
@@ -197,7 +198,7 @@ def menu_ia_ghosts(screen):
 
     return config
 
-def game(type="normal", ghost_config=None):
+def game(type="normal", maze_id = None, ghost_config=None):
     screen.fill((0, 0, 0))
     font = pygame.font.Font("fonts/emulogic.ttf", 50)
     final = font.render("Loading...", True, (255, 255, 255))
@@ -206,9 +207,10 @@ def game(type="normal", ghost_config=None):
 
     running = True
 
-    # Initialisation du jeu avec la config
-    game = Game.Game(screen, type, ghost_config=ghost_config)
-
+    # Create an instance of the Game class
+    game = Game.Game(screen, type, maze_id, ghost_config=ghost_config)
+ 
+    # Main game loop
     while running:
         game.dt = clock.tick(60) / 1000.0
 
@@ -343,41 +345,61 @@ def maps():
     screen.blit(loading, (SCREEN_WIDTH // 2 - loading.get_width() // 2, 350))
     pygame.display.flip()
 
-    try:
-        url = f"https://pacmaz-s1-o.onrender.com/mazes"
-        response = urlopen(url)
-        data_json = json.loads(response.read())
-        mazes = data_json.get("mazes", [])
-    except Exception as e:
-        print(f"Erreur chargement cartes: {e}")
-        mazes = []
+    url = f"https://pacmaz-s1-o.onrender.com/mazes"
+    response = urlopen(url)
+    data_json = json.loads(response.read())
+    
+    mazes = data_json["mazes"]
+    mazes_count = data_json["count"]
 
-    buttons = []
-    for i in range(min(5, len(mazes))):
-        buttons.append(Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3 + 60 * i), mazes[i]["id"], (255, 255, 255), 30))
+    maps = []
+    n = 0
+
+    for i in range(mazes_count):
+        maze, width, height, maze_id = get_data(mazes[i])
+        map = Map.Map(maze, width, height, 700, maze_id)
+        maps.append(map)
 
     while running:
         clock.tick(60)
         screen.fill((0, 0, 0))
-        screen.blit(map_txt, (SCREEN_WIDTH // 2 - map_txt.get_width() // 2, 20))
-
-        for button in buttons:
-            screen.blit(button.final, (button.x_pos, button.y_pos))
+        screen.blit(maps[n].bg,(SCREEN_WIDTH // 2 - maps[n].bg.get_width() // 2, SCREEN_HEIGHT // 2 - maps[n].bg.get_height() // 2))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
+                if event.key == pygame.K_RETURN:
+                    action = 1
+                    running = False
+                elif event.key == pygame.K_BACKSPACE:
                     action = 0
                     running = False
+                elif event.key == pygame.K_LEFT:
+                    if n - 1 >= 0:
+                        n -= 1
+                elif event.key == pygame.K_RIGHT:
+                    if n + 1 < mazes_count:
+                        n += 1
 
         pygame.display.flip()
         
     if action == 0:
         main_menu()
+    elif action == 1:
+        game("normal", maps[n].maze_id)
 
     pygame.quit()
+
+def get_data(maze):
+    maze_id = maze["id"]
+    width = maze["params"]["width"]
+    height = maze["params"]["height"]
+    url = f"https://pacmaz-s1-o.onrender.com/maze/{maze_id}"
+    response = urlopen(url)
+    data_json = json.loads(response.read())
+    maze = data_json.get("maze")
+    return maze, width, height, maze_id
 
 
 def get_player_name():
