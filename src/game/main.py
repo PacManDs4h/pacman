@@ -168,7 +168,7 @@ def menu_ia_ghosts(screen):
                 return None
             
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_BACKSPACE:
                     return None # Retour
                 
                 # Navigation HAUT / BAS
@@ -292,7 +292,7 @@ def play():
                     elif button_id == 2:
                         action = 3 # Play Save
                     running = False
-                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_BACKSPACE:
                     action = 0
                     running = False
                 elif event.key == pygame.K_UP:
@@ -372,7 +372,7 @@ def maps():
                 if event.key == pygame.K_RETURN:
                     action = 1
                     running = False
-                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
+                elif event.key == pygame.K_BACKSPACE:
                     action = 0
                     running = False
                 elif event.key == pygame.K_LEFT:
@@ -449,6 +449,8 @@ def run_game_instance(game_inst):
     screen.blit(final,(SCREEN_WIDTH // 2 - final.get_width() // 2, 350))
     pygame.display.flip()
 
+
+
     # start the provided game instance main loop
     running = True
     game = game_inst
@@ -475,6 +477,22 @@ def run_game_instance(game_inst):
                 f.write(game.pacman.save)
         except Exception:
             pass
+    # Ask for rating (0-10) after the game; None means no rating (set to null)
+    try:
+        rating = get_rating()
+        # send rating asynchronously (silent on failure)
+        def _post_rating(rating_val):
+            try:
+                payload = json.dumps({"note": rating_val}).encode("utf-8")
+                req = Request(f"{API_BASE_URL}/maze/{game.id}/rate", data=payload, headers={"Content-Type": "application/json"})
+                urlopen(req, timeout=5)
+            except Exception:
+                return
+
+        t_rating = threading.Thread(target=_post_rating, args=(rating,), daemon=True)
+        t_rating.start()
+    except Exception:
+        pass
 
     # post score async if normal (do this BEFORE returning to the menu)
     if game.type == "normal":
@@ -497,13 +515,10 @@ def run_game_instance(game_inst):
                 t.start()
         except Exception:
             pass
-
     if game.quit:
         pygame.quit()
     else:
         main_menu()
-
-        
 def get_rating():
     """Prompt player for a rating 0-10. Returns int 0-10 or None if empty/cancelled."""
     font = pygame.font.Font("fonts/emulogic.ttf", 36)
