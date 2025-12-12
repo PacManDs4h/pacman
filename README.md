@@ -1,8 +1,10 @@
-# pacman
+# Pacman
 
 khourta Sofiane
 el moussaoui Adel
 andre Mathis
+
+![](img/pacman.PNG)
 
 ## Jeu Pacman
 
@@ -15,29 +17,27 @@ dépendances nécessaires :
 
 installation de pygame :
 
-```pip install pygam```
+```pip install pygame```
 
 Les codes du jeu se trouvent ensuite dans le répertoire src/game/
 
 Exécution du jeu depuis src/game/ :
 
 ```python3 main.py```
-
-Lancement du serveur en local avec docker :
-```docker build -t maze-server .```
-```docker run -p 8080:8080 maze-server```
+ou
+```python main.py```
 
 lien du web-service :
-https://pacman-kw23.onrender.com/generate
+https://pacmaz-s1-o.onrender.com
 
 On peut préciser ces paramètres dans la génération du labyrinthe lors de la requète,
 si non précisés, elles auront les valeurs de base mises entre parenthèses :
-- height (19)
-- width (39)
-- nb_cycles (10)
-- num_tunnels_wrap (2)
-- num_tunnels_centre (5) # Reliant les deux parties symétriques
+- height
+- width
+- nb_cycles
+- num_tunnels_wrap
+- num_tunnels_centre
 
 Il faut rajouter un '?' après le lien, et séparer les paramètres avec des '&'.
 Exemple :
-```curl https://pacman-kw23.onrender.com/generate?height=23&width=40&nb_cycles=5```
+```curl https://pacmaz-s1-o.onrender.com/generate?height=23&width=40&nb_cycles=5```

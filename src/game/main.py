@@ -450,47 +450,6 @@ def run_game_instance(game_inst):
     pygame.display.flip()
 
 
-def get_rating():
-    """Prompt player for a rating 0-10. Returns int 0-10 or None if empty/cancelled."""
-    font = pygame.font.Font("fonts/emulogic.ttf", 36)
-    prompt = font.render("Noter le labyrinthe (0-10) - Enter pour valider, Esc pour ignorer:", True, (255, 255, 255))
-    value = ""
-    running = True
-
-    while running:
-        clock.tick(30)
-        screen.fill((0, 0, 0))
-        screen.blit(prompt, (SCREEN_WIDTH // 2 - prompt.get_width() // 2, SCREEN_HEIGHT // 3))
-
-        val_surf = font.render(value + ("|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""), True, (200, 200, 200))
-        screen.blit(val_surf, (SCREEN_WIDTH // 2 - val_surf.get_width() // 2, SCREEN_HEIGHT // 2))
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return None
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    if value.strip() == "":
-                        return None
-                    try:
-                        n = int(value.strip())
-                        if 0 <= n <= 10:
-                            return n
-                        else:
-                            # ignore invalid out-of-range
-                            value = ""
-                    except Exception:
-                        value = ""
-                elif event.key == pygame.K_BACKSPACE:
-                    value = value[:-1]
-                elif event.key == pygame.K_ESCAPE:
-                    return None
-                else:
-                    ch = event.unicode
-                    if ch and ch.isdigit() and len(value) < 2:
-                        value += ch
-
-        pygame.display.flip()
 
 
     # Main loop
@@ -557,6 +516,47 @@ def get_rating():
         pygame.quit()
     else:
         main_menu()
+def get_rating():
+    """Prompt player for a rating 0-10. Returns int 0-10 or None if empty/cancelled."""
+    font = pygame.font.Font("fonts/emulogic.ttf", 36)
+    prompt = font.render("Noter le labyrinthe (0-10) - Enter pour valider, Esc pour ignorer:", True, (255, 255, 255))
+    value = ""
+    running = True
+
+    while running:
+        clock.tick(30)
+        screen.fill((0, 0, 0))
+        screen.blit(prompt, (SCREEN_WIDTH // 2 - prompt.get_width() // 2, SCREEN_HEIGHT // 3))
+
+        val_surf = font.render(value + ("|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""), True, (200, 200, 200))
+        screen.blit(val_surf, (SCREEN_WIDTH // 2 - val_surf.get_width() // 2, SCREEN_HEIGHT // 2))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if value.strip() == "":
+                        return None
+                    try:
+                        n = int(value.strip())
+                        if 0 <= n <= 10:
+                            return n
+                        else:
+                            # ignore invalid out-of-range
+                            value = ""
+                    except Exception:
+                        value = ""
+                elif event.key == pygame.K_BACKSPACE:
+                    value = value[:-1]
+                elif event.key == pygame.K_ESCAPE:
+                    return None
+                else:
+                    ch = event.unicode
+                    if ch and ch.isdigit() and len(value) < 2:
+                        value += ch
+
+        pygame.display.flip()
 
 def leaderboard():
     """Fetch top scores from the server and display them in a styled Pacman-themed screen."""
