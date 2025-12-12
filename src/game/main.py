@@ -22,7 +22,6 @@ clock = pygame.time.Clock()
 
 API_BASE_URL = "https://pacmaz-s1-o.onrender.com"
 
-#def game(type = "normal"):
 # Liste des options d'IA
 AI_OPTIONS = ["blinky", "pinky", "inky", "clyde", "random"]
 
@@ -428,6 +427,7 @@ def run_game_instance(game_inst):
     screen.blit(final,(SCREEN_WIDTH // 2 - final.get_width() // 2, 350))
     pygame.display.flip()
 
+    # start the provided game instance main loop
     running = True
     game = game_inst
 
@@ -458,7 +458,6 @@ def run_game_instance(game_inst):
     if game.type == "normal":
         try:
             player_name = getattr(game, "player_name", None)
-            print(f"DEBUG: end-of-game send attempt in run_game_instance(): game.type={game.type!r}, player_name={player_name!r}, score={game.score!r}")
             if player_name and isinstance(player_name, str):
                 def _post():
                     try:
@@ -482,11 +481,84 @@ def run_game_instance(game_inst):
     else:
         main_menu()
 
+def leaderboard():
+    """Fetch top scores from the server and display them in a styled Pacman-themed screen."""
+    running = True
+    title_font = pygame.font.Font("fonts/emulogic.ttf", 60)
+    entry_font = pygame.font.Font("fonts/emulogic.ttf", 30)
+    small_font = pygame.font.Font("fonts/emulogic.ttf", 20)
+
+    try:
+        url = f"{API_BASE_URL}/leaderboard?limit=5"
+        resp = urlopen(url, timeout=5)
+        data_json = json.loads(resp.read())
+        entries = data_json.get("leaderboard", [])
+    except Exception as e:
+        entries = []
+        error_msg = f"Erreur chargement: {e}"
+
+    while running:
+        clock.tick(60)
+        screen.fill((0, 0, 0))
+
+        # Title
+        screen.blit(title_surf, (SCREEN_WIDTH // 2 - title_surf.get_width() // 2, 40))
+
+        # Draw column headers
+        header_x = SCREEN_WIDTH // 4
+        draw_text(screen, "Rank", small_font, (255,255,255), header_x, 140, anchor="midleft")
+        draw_text(screen, "Player", small_font, (255,255,255), header_x + 150, 140, anchor="midleft")
+        draw_text(screen, "Score", small_font, (255,255,255), header_x + 450, 140, anchor="midleft")
+
+        # Draw entries
+        start_y = 180
+        line_h = 48
+        for i, e in enumerate(entries):
+            rank = i + 1
+            name = e.get("player_name", "---")
+            score = e.get("score", 0)
+            created = e.get("created_at")
+
+            # Pacman colors for top ranks
+            if rank == 1:
+                color = (255, 215, 0)
+            elif rank == 2:
+                color = (192, 192, 192)
+            elif rank == 3:
+                color = (205, 127, 50)
+            else:
+                color = (200, 200, 200)
+
+            draw_text(screen, f"#{rank}", entry_font, color, header_x, start_y + i * line_h, anchor="midleft")
+            draw_text(screen, name, entry_font, (255,255,255), header_x + 150, start_y + i * line_h, anchor="midleft")
+            draw_text(screen, str(score), entry_font, (255,255,255), header_x + 450, start_y + i * line_h, anchor="midleft")
+
+        if not entries:
+            # show error or empty
+            msg = "Aucun score trouvé." if 'error_msg' not in locals() else error_msg
+            draw_text(screen, msg, entry_font, (255, 100, 100), SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+
+        # Footer
+        info = small_font.render("Press BACKSPACE to return", True, (200,200,200))
+        screen.blit(info, (SCREEN_WIDTH // 2 - info.get_width() // 2, SCREEN_HEIGHT - 60))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
+                    running = False
+
+        pygame.display.flip()
+
+
 
 def main_menu():
     running = True
     buttons = [
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3), "Play", (255, 255, 255), 90),
+        Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2.6), "Leaderboard", (255, 255, 255), 70),
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), "Maps", (255, 255, 255), 90),
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 1.2), "Quit", (255, 255, 255), 60)
     ]
@@ -529,6 +601,8 @@ def main_menu():
     if action == 1:
         play()
     elif action == 2:
+        leaderboard()
+    elif action == 3:
         maps()
 
     pygame.quit()
