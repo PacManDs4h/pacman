@@ -26,6 +26,7 @@ API_BASE_URL = "https://pacmaz-s1-o.onrender.com"
 # Liste des options d'IA
 AI_OPTIONS = ["blinky", "pinky", "inky", "clyde", "random"]
 
+
 # Définition des couleurs pour l'affichage
 COLORS = {
     "red": (255, 0, 0),
@@ -228,15 +229,11 @@ def game(type="normal", ghost_config=None):
             f.write("#")
             f.write(game.pacman.save)
             
-    if game.quit:
-        pygame.quit()
-    else:
-        main_menu()
-
     # If this was a normal game, post the score asynchronously (silent on failure)
     if type == "normal":
         try:
             player_name = getattr(game, "player_name", None)
+            print(f"DEBUG: end-of-game send attempt in game(): type={type!r}, game.type={getattr(game,'type',None)!r}, player_name={player_name!r}, score={getattr(game,'score',None)!r}")
             if player_name and isinstance(player_name, str):
                 def _post():
                     try:
@@ -255,6 +252,11 @@ def game(type="normal", ghost_config=None):
                 t.start()
         except Exception:
             pass
+
+    if game.quit:
+        pygame.quit()
+    else:
+        main_menu()
 
 def play():
     running = True
@@ -452,15 +454,11 @@ def run_game_instance(game_inst):
         except Exception:
             pass
 
-    if game.quit:
-        pygame.quit()
-    else:
-        main_menu()
-
-    # post score async if normal
+    # post score async if normal (do this BEFORE returning to the menu)
     if game.type == "normal":
         try:
             player_name = getattr(game, "player_name", None)
+            print(f"DEBUG: end-of-game send attempt in run_game_instance(): game.type={game.type!r}, player_name={player_name!r}, score={game.score!r}")
             if player_name and isinstance(player_name, str):
                 def _post():
                     try:
@@ -478,6 +476,11 @@ def run_game_instance(game_inst):
                 t.start()
         except Exception:
             pass
+
+    if game.quit:
+        pygame.quit()
+    else:
+        main_menu()
 
 
 def main_menu():
