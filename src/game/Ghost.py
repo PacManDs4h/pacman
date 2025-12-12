@@ -48,6 +48,7 @@ class Ghost():
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,14,14,14), 2, -1, True, frames),
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,28,14,14), 2, -1, True, frames),
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,42,14,14), 2, -1, True, frames),
+            SpriteStripAnim(f'sprites/scared_ghost_spritee_sheet.bmp', (0,0,14,14), 2, -1, True, frames),
         ]
 
         for j in range(len(self.strips)):
@@ -90,7 +91,7 @@ class Ghost():
                 in_house = True
 
         if self.chase == True:
-            self.MOVE_SPEED_CELLS_PER_SEC = 4.
+            self.MOVE_SPEED_CELLS_PER_SEC = 4.5
         else:
             self.MOVE_SPEED_CELLS_PER_SEC = 2.5
 

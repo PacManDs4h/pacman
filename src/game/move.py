@@ -78,7 +78,11 @@ def move(self):
             # Avancer normalement
             self.px = (self.px + move_x) % self.game.game_screen_w
             self.py = (self.py + move_y) % self.game.game_screen_h
-            self.current_sprite = self.strips[self.n].next()
+            if len(self.strips) >= 5 and not self.chase:
+                # if not self.chase:
+                self.current_sprite = self.strips[4].next()
+            else:
+                self.current_sprite = self.strips[self.n].next()
 
     else:
         # ne bouge pas, rester centré
