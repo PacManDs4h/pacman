@@ -475,22 +475,6 @@ def run_game_instance(game_inst):
                 f.write(game.pacman.save)
         except Exception:
             pass
-    # Ask for rating (0-10) after the game; None means no rating (set to null)
-    try:
-        rating = get_rating()
-        # send rating asynchronously (silent on failure)
-        def _post_rating(rating_val):
-            try:
-                payload = json.dumps({"note": rating_val}).encode("utf-8")
-                req = Request(f"{API_BASE_URL}/maze/{game.id}/rate", data=payload, headers={"Content-Type": "application/json"})
-                urlopen(req, timeout=5)
-            except Exception:
-                return
-
-        t_rating = threading.Thread(target=_post_rating, args=(rating,), daemon=True)
-        t_rating.start()
-    except Exception:
-        pass
 
     # post score async if normal (do this BEFORE returning to the menu)
     if game.type == "normal":
@@ -513,6 +497,7 @@ def run_game_instance(game_inst):
                 t.start()
         except Exception:
             pass
+
     if game.quit:
         pygame.quit()
     else:
