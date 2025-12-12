@@ -4,6 +4,24 @@ khourta Sofiane
 el moussaoui Adel
 andre Mathis
 
+## Jeu Pacman
+
+Le jeu est développé en Python avec la librairie pygame
+
+dépendances nécessaires :
+
+- python
+- pygame
+
+installation de pygame :
+
+```pip install pygam```
+
+Les codes du jeu se trouvent ensuite dans le répertoire src/game/
+
+Exécution du jeu depuis src/game/ :
+
+```python3 main.py```
 
 Lancement du serveur en local avec docker :
 ```docker build -t maze-server .```
