@@ -509,6 +509,9 @@ def leaderboard():
     title_font = pygame.font.Font("fonts/emulogic.ttf", 60)
     entry_font = pygame.font.Font("fonts/emulogic.ttf", 30)
     small_font = pygame.font.Font("fonts/emulogic.ttf", 20)
+    title_surf = title_font.render("LEADERBOARD", True, (255, 255, 0))
+
+    action = 0
 
     try:
         url = f"{API_BASE_URL}/leaderboard?limit=5"
@@ -571,17 +574,20 @@ def leaderboard():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     running = False
+                    action = 1
 
         pygame.display.flip()
 
+    if action == 1:
+        main_menu()
 
 
 def main_menu():
     running = True
     buttons = [
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 3), "Play", (255, 255, 255), 90),
-        Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2.6), "Leaderboard", (255, 255, 255), 70),
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2), "Maps", (255, 255, 255), 90),
+        Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 1.5), "Leaderboard", (255, 255, 255), 90),
         Button.Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT // 1.2), "Quit", (255, 255, 255), 60)
     ]
     max_index = len(buttons) - 1
@@ -610,6 +616,9 @@ def main_menu():
                         action = 2
                         running = False
                     elif button_id == 2:
+                        action = 3
+                        running = False
+                    elif button_id == 3:
                         running = False
                 elif event.key == pygame.K_UP:
                     if button_id - 1 >= 0:
@@ -623,9 +632,9 @@ def main_menu():
     if action == 1:
         play()
     elif action == 2:
-        leaderboard()
-    elif action == 3:
         maps()
+    elif action == 3:
+        leaderboard()
 
     pygame.quit()
 
