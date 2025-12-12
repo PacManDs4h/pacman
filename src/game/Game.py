@@ -46,8 +46,13 @@ class Game:
         self.powered_up = False
 
         self.id = None
-        with open("save.txt") as f:
-            self.save = f.read()
+        try:
+            with open("save.txt") as f:
+                self.save = f.read()
+        except FileNotFoundError:
+            # Fallback: no save file present (normal play). Use placeholder
+            # so subsequent split operations keep working.
+            self.save = "#"
         self.save = self.save.split("#", 1)
         if self.type == "play_save":
             self.id = self.save[0]

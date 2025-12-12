@@ -492,9 +492,6 @@ def get_rating():
 
         pygame.display.flip()
 
-    # start the provided game instance main loop
-    running = True
-    game = game_inst
 
     # Main loop
     while running:
