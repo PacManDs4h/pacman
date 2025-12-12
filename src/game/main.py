@@ -3,6 +3,9 @@ from urllib.request import urlopen
 import Game
 import pygame
 import Button
+import threading
+from urllib.request import Request, urlopen
+import urllib.error
 
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 780
@@ -16,6 +19,8 @@ pygame.display.set_caption("Pacman")
 pygame.event.set_allowed([pygame.QUIT, pygame.KEYDOWN, pygame.KEYUP])
 pygame.font.init()
 clock = pygame.time.Clock()
+
+API_BASE_URL = "https://pacmaz-s1-o.onrender.com"
 
 def game(type = "normal"):
     screen.fill((0, 0, 0))
@@ -59,6 +64,29 @@ def game(type = "normal"):
         pygame.quit()
     else:
         main_menu()
+
+    # If this was a normal game, post the score asynchronously (silent on failure)
+    if type == "normal":
+        try:
+            player_name = getattr(game, "player_name", None)
+            if player_name and isinstance(player_name, str):
+                def _post():
+                    try:
+                        payload = json.dumps({
+                            "player_name": player_name,
+                            "score": game.score,
+                            "maze_id": game.id
+                        }).encode("utf-8")
+                        req = Request(f"{API_BASE_URL}/score", data=payload, headers={"Content-Type": "application/json"})
+                        urlopen(req, timeout=5)
+                    except Exception:
+                        # silent failure
+                        return
+
+                t = threading.Thread(target=_post, daemon=True)
+                t.start()
+        except Exception:
+            pass
 
 def play():
     running = True
@@ -110,7 +138,16 @@ def play():
     if action == 0:
         main_menu()
     elif action == 1:
-        game("normal")
+        # Prompt player name before starting a normal game
+        player_name = get_player_name()
+        if player_name is None:
+            # cancelled, go back to menu
+            main_menu()
+        else:
+            # start game and attach player_name to Game instance
+            g = Game.Game(screen, "normal")
+            g.player_name = player_name
+            run_game_instance(g)
     elif action == 2:
         game("record")
     elif action == 3:
@@ -162,6 +199,107 @@ def maps():
         main_menu()
 
     pygame.quit()
+
+
+def get_player_name():
+    """Simple Pygame text input prompt. Returns the entered name (max 20 chars) or None if cancelled."""
+    font = pygame.font.Font("fonts/emulogic.ttf", 40)
+    prompt = font.render("Enter name (max 20 chars):", True, (255, 255, 255))
+    name = ""
+    running = True
+
+    while running:
+        clock.tick(30)
+        screen.fill((0, 0, 0))
+        screen.blit(prompt, (SCREEN_WIDTH // 2 - prompt.get_width() // 2, SCREEN_HEIGHT // 3))
+
+        # render current name
+        name_surf = font.render(name + ("|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""), True, (200, 200, 200))
+        screen.blit(name_surf, (SCREEN_WIDTH // 2 - name_surf.get_width() // 2, SCREEN_HEIGHT // 2))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return None
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    if len(name.strip()) == 0:
+                        # require non-empty
+                        continue
+                    return name.strip()[:20]
+                elif event.key == pygame.K_BACKSPACE:
+                    name = name[:-1]
+                elif event.key == pygame.K_ESCAPE:
+                    return None
+                else:
+                    # limit to printable characters
+                    ch = event.unicode
+                    if ch and len(name) < 20 and (32 <= ord(ch) <= 126):
+                        name += ch
+
+        pygame.display.flip()
+
+
+def run_game_instance(game_inst):
+    """Run the main loop for an existing Game instance (used so we can attach player_name)."""
+    # show loading
+    screen.fill((0, 0, 0))
+    font = pygame.font.Font("fonts/emulogic.ttf", 50)
+    final = font.render("Loading...", True, (255, 255, 255))
+    screen.blit(final,(SCREEN_WIDTH // 2 - final.get_width() // 2, 350))
+    pygame.display.flip()
+
+    running = True
+    game = game_inst
+
+    # Main loop
+    while running:
+        game.dt = clock.tick(60) / 1000.0
+        if game.type == "normal":
+            running = game.process_events()
+        elif game.type == "record":
+            running = game.process_events()
+        elif game.type == "play_save":
+            running = game.process_save()
+
+        game.run_logic()
+        game.display_frame()
+
+    # handle record save
+    if game.type == "record":
+        try:
+            with open("save.txt", "w") as f:
+                f.write(game.id)
+                f.write("#")
+                f.write(game.pacman.save)
+        except Exception:
+            pass
+
+    if game.quit:
+        pygame.quit()
+    else:
+        main_menu()
+
+    # post score async if normal
+    if game.type == "normal":
+        try:
+            player_name = getattr(game, "player_name", None)
+            if player_name and isinstance(player_name, str):
+                def _post():
+                    try:
+                        payload = json.dumps({
+                            "player_name": player_name,
+                            "score": game.score,
+                            "maze_id": game.id
+                        }).encode("utf-8")
+                        req = Request(f"{API_BASE_URL}/score", data=payload, headers={"Content-Type": "application/json"})
+                        urlopen(req, timeout=5)
+                    except Exception:
+                        return
+
+                t = threading.Thread(target=_post, daemon=True)
+                t.start()
+        except Exception:
+            pass
 
 
 def main_menu():
