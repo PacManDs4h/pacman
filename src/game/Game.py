@@ -1,12 +1,13 @@
 import json
 from urllib.request import urlopen
+from collections import deque
 import pygame
 import Spritesheet
 import Pacman
 import Ghost
 
 class Game:
-    def __init__(self, screen, type = "normal"):
+    def __init__(self, screen, type = "normal", ghost_config=None):
         self.MAZE_WIDTH = 19
         self.MAZE_HEIGHT = 21 
         self.MAZE_NB_CYCLES = 10
@@ -72,11 +73,21 @@ class Game:
         self.load_map_sprites()
         self.pacman = Pacman.Pacman(self)
 
+        if ghost_config is None:
+            self.ghost_config = {
+                "red": "blinky",
+                "pink": "pinky",
+                "blue": "inky",
+                "orange": "clyde"
+            }
+        else:
+            self.ghost_config = ghost_config
+
         if not type == "record":
-            self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2)
-            self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1 , self.height // 2)
-            self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2)
-            self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2)
+            self.red_ghost = Ghost.Ghost(self, "red", self.width // 2, self.height // 2 - 2, self.ghost_config["red"])
+            self.pink_ghost = Ghost.Ghost(self, "pink", self.width // 2, self.height // 2, self.ghost_config["pink"])
+            self.blue_ghost = Ghost.Ghost(self, "blue", self.width // 2 - 1, self.height // 2, self.ghost_config["blue"])
+            self.orange_ghost = Ghost.Ghost(self, "orange", self.width // 2 + 1, self.height // 2, self.ghost_config["orange"])
 
             self.ghosts = [self.red_ghost, self.blue_ghost, self.pink_ghost, self.orange_ghost]
             self.ghosts_pos = []
@@ -340,4 +351,35 @@ class Game:
             self.screen.blit(win_surf, (self.screen_w // 2 - win_surf.get_width() // 2, self.screen_h // 2 - win_surf.get_height() // 2))
         
         pygame.display.flip()
+
+    def get_path_bfs(self, start, target):
+        """ Trouve le chemin de start(x,y) vers target(x,y) """
+        queue = deque([start])
+        came_from = {start: None}
+        
+        while queue:
+            current = queue.popleft()
+            if current == target:
+                break
+            
+            cx, cy = current
+            # Voisins : Haut, Bas, Gauche, Droite
+            for nx, ny in [(cx, cy-1), (cx, cy+1), (cx-1, cy), (cx+1, cy)]:
+                # Vérifie les limites et les murs (0 = vide, 1 = mur)
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    if int(self.maze[ny][nx]) != 1 and (nx, ny) not in came_from:
+                        queue.append((nx, ny))
+                        came_from[(nx, ny)] = current
+                        
+        # Reconstruction du chemin
+        if target not in came_from:
+            return []
+            
+        path = []
+        curr = target
+        while curr != start:
+            path.append(curr)
+            curr = came_from[curr]
+        path.reverse()
+        return path
         

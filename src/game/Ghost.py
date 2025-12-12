@@ -2,10 +2,11 @@ import pygame
 from SpriteStripAnim import SpriteStripAnim
 import move
 import random
+import math
 
 class Ghost():
     """ This class represents a ghost. """
-    def __init__(self, game, color, start_x, start_y):
+    def __init__(self, game, color, start_x, start_y, ia_type="blinky"):
         self.game = game
         self.color = color
 
@@ -35,6 +36,7 @@ class Ghost():
         self.center = (0, 0)
 
         self.chase = True
+        self.ia_type = ia_type
 
         self.load_sprites()
     
@@ -65,12 +67,99 @@ class Ghost():
         self.current_dir = (0, 0)
         self.next_dir = (0, 0)
 
-    def update(self):
-        """ Update the ghost location. """
-        # can't be oposite of current direction
-        self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
-        if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
-            self.next_dir = self.current_dir
+    def get_target(self):
+        """ Définit la case cible selon la personnalité du fantôme """
+        
+        # On récupère les infos de Pacman
+        pacman = self.game.pacman
+        px, py = int(pacman.x), int(pacman.y)
+        
+        # On essaie de récupérer la direction de Pacman (sinon par défaut (0,0))
+        p_dir_x, p_dir_y = getattr(pacman, 'next_dir', (0, 0)) 
+
+        # IA Random
+        if self.ia_type == "random":
+            return None
+
+        # IA Blinky (Chasseur directe)
+        if self.ia_type == "blinky":
+            return (px, py)
+
+        # IA Pinky (Vise 4 cases devant)
+        elif self.ia_type == "pinky":
+            target_x = px + (p_dir_x * 4)
+            target_y = py + (p_dir_y * 4)
+            return (int(target_x), int(target_y))
+
+        # IA Inky (Symétrie par rapport à Blinky)
+        elif self.ia_type == "inky":
+            # Il a besoin de la position de Blinky (Red)
+            if hasattr(self.game, 'red_ghost'):
+                red = self.game.red_ghost
+                rx, ry = int(red.x), int(red.y)
+                
+                # Point pivot : 2 cases devant Pacman
+                pivot_x = px + (p_dir_x * 2)
+                pivot_y = py + (p_dir_y * 2)
+                
+                # Vecteur Blinky -> Pivot
+                vec_x = pivot_x - rx
+                vec_y = pivot_y - ry
+                
+                # Cible = Pivot + Vecteur (Double la distance)
+                return (int(pivot_x + vec_x), int(pivot_y + vec_y))
+            else:
+                return (px, py) # Fallback sur comportement rouge
+
+        # IA Clyde (retourne au coin gauche quand se rapproche de Pacman
+        elif self.ia_type == "clyde":
+            # Calcul de la distance avec Pacman (Euclidienne)
+            gx, gy = int(self.x), int(self.y)
+            distance = math.sqrt((gx - px)**2 + (gy - py)**2)
+            
+            if distance > 8:
+                # Si loin : il chasse
+                return (px, py)
+            else:
+                # Si trop près : il fuit vers son coin (ex: 0, Hauteur max)
+                return (0, self.game.height - 1)
+
+        # Par défaut (si autre couleur)
+        return (px, py)
+
+    def mouv_ghost(self):
+        start_pos = (int(self.x), int(self.y))
+
+        if self.ia_type == "random":
+            self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
+            if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
+                self.next_dir = self.current_dir
+            move.get_direction(self, True) # True = Random allowed inside move logic if implemented
+            move.move(self)
+            return
+        
+        target_pos = self.get_target()
+        
+        path = self.game.get_path_bfs(start_pos, target_pos)
+        
+        if path:
+            # La prochaine case où aller est la première du chemin
+            next_cell = path[0] 
+            nx, ny = next_cell
+            
+            dx = nx - start_pos[0]
+            dy = ny - start_pos[1]
+            self.next_dir = (dx, dy)
+        else:
+            # Si pas de chemin trouvé, mouvement aléatoire
+            self.next_dir = random.choice([(0, -1), (0, 1), (-1, 0), (1, 0)])
+            if self.next_dir == (-self.current_dir[0], -self.current_dir[1]):
+                self.next_dir = self.current_dir
+
+        if self.chase == True:
+            self.MOVE_SPEED_CELLS_PER_SEC = 4.
+        else:
+            self.MOVE_SPEED_CELLS_PER_SEC = 2.5
 
         in_house = False
 
@@ -90,12 +179,14 @@ class Ghost():
             else:
                 in_house = True
 
-        if self.chase == True:
-            self.MOVE_SPEED_CELLS_PER_SEC = 4.5
-        else:
-            self.MOVE_SPEED_CELLS_PER_SEC = 2.5
-
-
-
         move.get_direction(self, in_house)
         move.move(self)
+
+    def update(self):
+        """ Update the ghost location. """
+        self.mouv_ghost()
+
+
+
+
+
