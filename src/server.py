@@ -252,24 +252,35 @@ def rate_maze(maze_id):
     if not request.json or 'note' not in request.json:
         return abort(400, description="JSON body with 'note' required")
 
+    note_val = request.json.get('note')
+
     try:
-        new_note = int(request.json['note'])
+        # If client explicitly sent null, set note to None in DB
+        if note_val is None:
+            result = mazes_collection.update_one(
+                {"_id": ObjectId(maze_id)},
+                {"$set": {"note": None}}
+            )
+            if result.matched_count == 0:
+                return abort(404, description="Maze not found")
+            return jsonify({"status": "success", "new_note": None}), 200
+
+        # Otherwise expect an integer 0-10
+        new_note = int(note_val)
         if not (0 <= new_note <= 10):
             return abort(400, description="Note must be between 0 and 10")
-        
-        # Mise à jour
+
         result = mazes_collection.update_one(
             {"_id": ObjectId(maze_id)},
             {"$set": {"note": new_note}}
         )
-        
         if result.matched_count == 0:
             return abort(404, description="Maze not found")
 
         return jsonify({"status": "success", "new_note": new_note}), 200
 
     except ValueError:
-        return abort(400, description="Note must be an integer")
+        return abort(400, description="Note must be an integer or null")
     except Exception as e:
         return abort(500, description=str(e))
 
