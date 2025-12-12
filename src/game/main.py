@@ -509,6 +509,7 @@ def leaderboard():
     title_font = pygame.font.Font("fonts/emulogic.ttf", 60)
     entry_font = pygame.font.Font("fonts/emulogic.ttf", 30)
     small_font = pygame.font.Font("fonts/emulogic.ttf", 20)
+    title_surf = title_font.render("LEADERBOARD", True, (255, 255, 0))
 
     try:
         url = f"{API_BASE_URL}/leaderboard?limit=5"
