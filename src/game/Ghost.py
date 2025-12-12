@@ -50,6 +50,7 @@ class Ghost():
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,14,14,14), 2, -1, True, frames),
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,28,14,14), 2, -1, True, frames),
             SpriteStripAnim(f'sprites/{color}_ghost_sprite_sheet.bmp', (0,42,14,14), 2, -1, True, frames),
+            SpriteStripAnim(f'sprites/scared_ghost_spritee_sheet.bmp', (0,0,14,14), 2, -1, True, frames),
         ]
 
         for j in range(len(self.strips)):

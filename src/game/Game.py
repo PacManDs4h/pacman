@@ -257,6 +257,8 @@ class Game:
         if self.i < len(self.save):
             self.pacman.next_dir = eval(self.save[self.i])
             self.i += 1
+            if self.i >= len(self.save):
+                self.running = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.quit = True
