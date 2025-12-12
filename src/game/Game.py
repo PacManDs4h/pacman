@@ -202,7 +202,7 @@ class Game:
                 self.quit = True
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
+                if event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     self.running = False
         return self.running
 
@@ -221,7 +221,7 @@ class Game:
                     self.pacman.next_dir = (-1, 0)
                 elif event.key == pygame.K_RIGHT:
                     self.pacman.next_dir = (1, 0)
-                elif event.key == pygame.K_BACKSPACE:
+                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     self.running = False
         return self.running
 
