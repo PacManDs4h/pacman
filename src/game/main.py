@@ -168,7 +168,7 @@ def menu_ia_ghosts(screen):
                 return None
             
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_BACKSPACE:
+                if event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     return None # Retour
                 
                 # Navigation HAUT / BAS
@@ -292,7 +292,7 @@ def play():
                     elif button_id == 2:
                         action = 3 # Play Save
                     running = False
-                elif event.key == pygame.K_BACKSPACE:
+                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     action = 0
                     running = False
                 elif event.key == pygame.K_UP:
@@ -372,7 +372,7 @@ def maps():
                 if event.key == pygame.K_RETURN:
                     action = 1
                     running = False
-                elif event.key == pygame.K_BACKSPACE:
+                elif event.key == pygame.K_BACKSPACE or event.key == pygame.K_ESCAPE:
                     action = 0
                     running = False
                 elif event.key == pygame.K_LEFT:
@@ -449,8 +449,6 @@ def run_game_instance(game_inst):
     screen.blit(final,(SCREEN_WIDTH // 2 - final.get_width() // 2, 350))
     pygame.display.flip()
 
-
-
     # start the provided game instance main loop
     running = True
     game = game_inst
@@ -519,6 +517,8 @@ def run_game_instance(game_inst):
         pygame.quit()
     else:
         main_menu()
+
+        
 def get_rating():
     """Prompt player for a rating 0-10. Returns int 0-10 or None if empty/cancelled."""
     font = pygame.font.Font("fonts/emulogic.ttf", 36)
